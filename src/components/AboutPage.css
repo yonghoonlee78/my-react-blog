@@ -1,0 +1,60 @@
+/* src/components/AboutPage.css */
+.about-page-container {
+    padding: 30px;
+    background-color: #282c34;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    max-width: 800px;
+    margin: 30px auto;
+    color: white;
+    line-height: 1.6;
+  }
+  
+  .about-page-title {
+    color: #61dafb;
+    font-size: 2.5em;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #61dafb;
+    padding-bottom: 10px;
+    text-align: center;
+  }
+  
+  .about-page-container p {
+    margin-bottom: 1em;
+    font-size: 1.1em;
+  }
+  
+  .contact-info {
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #333;
+    border-radius: 8px;
+    border: 1px solid #444;
+  }
+  
+  .contact-info h3 {
+    color: #61dafb;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.8em;
+  }
+  
+  .contact-info p {
+    margin-bottom: 8px;
+  }
+  
+  .contact-info a {
+    color: #61dafb;
+    text-decoration: underline;
+  }
+  
+ 
+  @media (max-width: 768px) {
+    .about-page-container {
+      padding: 15px;
+      margin: 15px auto;
+    }
+    .about-page-title {
+      font-size: 2em;
+    }
+  }

@@ -1,0 +1,113 @@
+/* src/components/PostDetail.css */
+.post-detail-container {
+    padding: 30px;
+    background-color: #282c34;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    max-width: 900px; 
+    margin: 30px auto; 
+    color: white;
+  }
+  
+  .post-detail-title {
+    color: #61dafb;
+    font-size: 2.8em;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #61dafb;
+    padding-bottom: 10px;
+  }
+  
+  .post-detail-meta {
+    font-size: 0.95em;
+    color: #aaa;
+    margin-bottom: 30px;
+  }
+  
+  .post-content {
+    line-height: 1.8;
+    font-size: 1.1em;
+    margin-bottom: 40px;
+  }
+  
+  
+  .post-content h1, .post-content h2, .post-content h3, .post-content h4, .post-content h5, .post-content h6 {
+    color: #61dafb;
+    margin-top: 1.5em;
+    margin-bottom: 0.8em;
+  }
+  
+  .post-content p {
+    margin-bottom: 1em;
+  }
+  
+  .post-content a {
+    color: #61dafb;
+    text-decoration: underline;
+  }
+  
+  .post-content ul, .post-content ol {
+    margin-left: 25px;
+    margin-bottom: 1em;
+  }
+  
+  .post-content code {
+    background-color: #3a3f47;
+    color: #f8f8f2;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+  }
+  
+  .post-content pre {
+    background-color: #3a3f47;
+    color: #f8f8f2;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 1.5em;
+  }
+  
+  .post-content blockquote {
+    border-left: 4px solid #61dafb;
+    background-color: #333;
+    padding: 10px 20px;
+    margin: 1.5em 0;
+    color: #ccc;
+    font-style: italic;
+  }
+  
+  .back-button {
+    display: block;
+    width: 200px;
+    padding: 12px 20px;
+    background-color: #61dafb;
+    color: #20232a;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    cursor: pointer;
+    margin: 30px auto 0 auto; 
+    transition: background-color 0.3s ease;
+  }
+  
+  .back-button:hover {
+    background-color: #4dc2ea;
+  }
+  
+  .post-detail-loading {
+    text-align: center;
+    font-size: 1.5em;
+    color: #aaa;
+    padding: 50px;
+  }
+  
+  
+  @media (max-width: 768px) {
+    .post-detail-container {
+      padding: 15px;
+      margin: 15px auto;
+    }
+    .post-detail-title {
+      font-size: 2em;
+    }
+  }
