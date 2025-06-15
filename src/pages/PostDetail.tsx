@@ -11,7 +11,7 @@ const PostDetail: React.FC = () => {
     <main style={{ padding: '2rem' }}>
       <h1>{post.title}</h1>
       <article>
-        {/* markdown 파서가 없으니 일단 프리텍스트 */}
+        
         <pre>{post.content}</pre>
       </article>
     </main>

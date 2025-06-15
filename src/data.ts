@@ -71,13 +71,13 @@ React에서 State를 업데이트할 때는 항상 새로운 객체나 배열을
     title: '나만의 Kaia 블록체인 지갑 만들기',
     content: `# Kaia 지갑 데모 …`,
     date: '2025-06-14',
-    tags: ['Blockchain', 'Kaia', 'Wallet', 'Web3.js'],  // 태그도 추가 가능
+    tags: ['Blockchain', 'Kaia', 'Wallet', 'Web3.js'],  
     category: '블록체인',
     route: '/wallet'
   },
 
   {
-    id: 'kaia-mnemonic-wallet',                       // ← 고유 ID
+    id: 'kaia-mnemonic-wallet',                       
     title: '니모닉 기반 Kaia 결정형 지갑 만들기',
     content: `# Mnemonic Wallet\n\n니모닉 생성과 복구를 지원하는 결정형 지갑을 만들어봅니다.`,
     date: '2025-06-15',

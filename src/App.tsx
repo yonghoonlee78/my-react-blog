@@ -10,14 +10,12 @@ import NotFoundPage from './components/NotFoundPage';
 import { Post } from './types/Post';
 import { initialPosts } from './data';
 
-const base = process.env.NODE_ENV === 'production' ? '/my-react-blog' : '/';
-
 const App: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   useEffect(() => setPosts(initialPosts), []);
 
   return (
-    <Router basename={base}>
+    <Router>
       <Layout>
         <Routes>
           <Route path="/" element={<PostList posts={posts} />} />
