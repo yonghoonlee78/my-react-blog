@@ -8,8 +8,7 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   return (
-    <Link
-  to={post.route ?? `/blog/${post.id}`}   // 🟢 route 있으면 그대로, 없으면 /blog/:id
+    <Link to={post.route ?? `/blog/${post.id}`}   
   className="post-link"
 >
       <div className="post-card-content">

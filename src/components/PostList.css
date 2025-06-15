@@ -39,7 +39,7 @@
   
   .post-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* 반응형 그리드 */
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
     gap: 25px;
     justify-content: center;
   }

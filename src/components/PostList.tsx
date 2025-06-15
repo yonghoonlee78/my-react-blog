@@ -10,7 +10,7 @@ interface PostListProps {
 const PostList: React.FC<PostListProps> = ({ posts }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedTag, setSelectedTag] = useState(''); // 초기값 수정
+  const [selectedTag, setSelectedTag] = useState(''); 
 
   
   const filteredPosts = posts.filter(post => {

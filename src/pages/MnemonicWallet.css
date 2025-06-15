@@ -1,0 +1,135 @@
+.mnemonic-app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    color: #eee;
+  }
+  
+  .mnemonic-app h2 {
+    color: #00c2ff;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .mnemonic-input {
+    width: 100%;
+    max-width: 480px;
+    height: 80px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #666;
+    background: #1e1e1e;
+    color: #f5f5f5;
+    resize: vertical;
+  }
+  
+  .mnemonic-btn-group {
+    display: flex;
+    gap: 40px;
+    margin: 12px 0 22px;
+  }
+  .mnemonic-btn-group button { flex: 1; }
+  
+  .wallet-card {
+    background: #2a2a2a;
+    padding: 24px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  
+  .kv { word-break: break-all; font-size: 14px; margin: 6px 0; }
+  
+  .balance-btn {
+    margin-top: 30px;
+    display: block;
+    margin: 25px auto 0;
+    padding: 6px 16px;
+    background: #28a745;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  .balance-display {
+    text-align: center;
+    color: #ffc107;
+    margin: 10px 0 4px;
+    font-weight: 600;
+  }
+  
+  .transfer-title { text-align: center; color: #ffc107; margin: 26px 0 14px; }
+  
+  .send-area { display: flex; flex-direction: column; align-items: center; }
+  
+  .send-area input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #1c1c1c;
+    color: #eee;
+  }
+  
+  .send-btn {
+    width: 110px;
+    padding: 8px 0;
+    background: #795548; 
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, .3);
+    transition:.3s;
+  }
+  .send-btn:hover { background:#0056b3; }
+  
+  .tx-hash { font-size: 13px; margin-top: 12px; word-break: break-all; color:#40c4ff; }
+  
+  .error-msg { color:#ff6b6b; margin-top:14px; }
+  
+  .generate-btn {
+    background-color: #ff9800;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .generate-btn:hover {
+    background-color: #0056b3;
+  }
+  
+  .restore-btn {
+    background-color: #e91e63;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .restore-btn:hover {
+    background-color: #1e7e34;
+  }
+
+  .kv {
+    display: flex;
+    gap: 12px;               
+    margin-bottom: 6px;
+    word-break: break-all;   
+    align-items: flex-start;
+  }
+  .kv strong {
+    min-width: 100px;        
+    display: inline-block;
+  }

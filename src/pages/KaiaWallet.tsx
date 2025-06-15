@@ -14,7 +14,7 @@ function KaiaWallet() {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  /* ───────── 지갑 생성 ───────── */
+  
   const createWallet = () => {
     const newWallet = web3.eth.accounts.create();
     setWallet(newWallet);
@@ -22,14 +22,14 @@ function KaiaWallet() {
     setTxHash(null);
   };
 
-  /* ───────── 잔액 조회 ───────── */
+  
   const getBalance = async () => {
     if (!wallet) return;
     const wei = await web3.eth.getBalance(wallet.address);
     setBalance(web3.utils.fromWei(wei, 'ether'));
   };
 
-  /* ───────── 송금 ───────── */
+  
   const sendTransaction = async () => {
     if (!wallet || !recipient || !amount) return;
     try {
@@ -41,13 +41,13 @@ function KaiaWallet() {
       const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction as string);
 
       setTxHash(receipt.transactionHash.toString());
-      getBalance();          // 잔액 갱신
+      getBalance();          
     } catch (e) {
       console.error('Transaction Failed:', e);
     }
   };
 
-  /* ───────── 프라이빗 키 복사 ───────── */
+  
   const copyPrivateKey = async () => {
     if (!wallet) return;
     try {
@@ -59,7 +59,7 @@ function KaiaWallet() {
     }
   };
 
-  /* ───────── UI ───────── */
+  
   return (
     <div className="App">
       <h2>Kaia Wallet (Testnet)</h2>
@@ -70,7 +70,7 @@ function KaiaWallet() {
         </div>
       ) : (
         <div className="wallet-container">
-          {/* 지갑 정보 */}
+          
           <div className="wallet-info">
             <p className="address-private-section">
               <strong>주소&nbsp;:</strong>&nbsp; {wallet.address}
@@ -90,7 +90,7 @@ function KaiaWallet() {
             </p>
           )}
 
-          {/* 송금 */}
+          
           <h3 className="transfer-title">💸 송금</h3>
           <div className="send-transaction">
           <p className="send-label"></p>
@@ -110,7 +110,7 @@ function KaiaWallet() {
             <button onClick={sendTransaction} className="send-btn">Send Kaia</button>
           </div>
 
-          {/* 트랜잭션 해시 */}
+          
           {txHash && (
             <p className="tx-hash">
               ✅ <strong>트랜잭션 해시:</strong>{' '}

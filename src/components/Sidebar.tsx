@@ -13,7 +13,7 @@ const Sidebar: React.FC = () => {
         <ul>
           <li><Link to="/" className="nav-link">홈</Link></li>
           <li><Link to="/about" className="nav-link">소개</Link></li>
-          {/* 추가 메뉴는 나중에 필요에 따라 여기에 추가할 수 있습니다. */}
+          
         </ul>
       </nav>
       <div className="sidebar-footer">
