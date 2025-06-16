@@ -1,117 +1,93 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getTransactionReceipt, getTransaction, fromWei } from '../utils/web3';
-import { Transaction, TransactionReceipt } from 'web3-types';
+import web3 from '../utils/web3';
+import './TxOverview.css';
 
-const TransactionDetail: React.FC = () => {
+interface TxView {
+  status: 'Success' | 'Fail';
+  blockNumber: number;
+  from: string;
+  to: string | null;
+  value: string;
+  gasPrice: string;
+  effectiveGasPrice: string;
+  gasUsed: number;
+  gasLimit: number;
+  txFee: string;
+  nonce: number;
+  methodSig?: string;
+  timestamp: number;
+}
+
+const weiToKaia = (wei: string | bigint) =>
+  web3.utils.fromWei(wei.toString(), 'ether');
+
+export default function TransactionDetail() {
   const { txHash } = useParams<{ txHash: string }>();
-  const [transaction, setTransaction] = useState<TransactionReceipt | null>(
-    null
-  );
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState<boolean>(false);
-  const [txDetails, setTxDetails] = useState<Transaction | Record<string, any>>(
-    {}
-  );
-  const [amount, setAmount] = useState<string | null>(null);
-  const [gasPrice, setGasPrice] = useState<string | null>(null);
+  const [txInfo, setTxInfo] = useState<TxView | null>(null);
 
   useEffect(() => {
-    if (!txHash) {
-      setError('트랜잭션 해시가 제공되지 않았습니다.');
-      setLoading(false);
-      return;
-    }
+    if (!txHash) return;
 
-    let isMounted = true;
+    (async () => {
+      const tx: any = await web3.eth.getTransaction(txHash);
+      const receipt: any = await web3.eth.getTransactionReceipt(txHash);
+      const block: any = await web3.eth.getBlock(receipt.blockNumber);
 
-    const fetchTx = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+      const gasUsed      = Number(receipt.gasUsed);
+      const rawGasPrice  = tx.gasPrice ?? tx.maxFeePerGas ?? '0';
+      const rawEffPrice  = receipt.effectiveGasPrice ?? rawGasPrice;
 
-        const tx = await getTransaction(txHash);
-        if (!tx) {
-          throw new Error('트랜잭션을 찾을 수 없습니다.');
-        }
+      const gasPriceKAIA = weiToKaia(rawGasPrice);
+      const effPriceKAIA = weiToKaia(rawEffPrice);
+      const txFeeKAIA    = (Number(effPriceKAIA) * gasUsed).toFixed(6);
 
-        if (tx.blockNumber === null) {
-          if (isMounted) {
-            setPending(true);
-            setTxDetails(tx);
-            setAmount(fromWei(tx.value));
-            setGasPrice(fromWei(tx.gasPrice));
-          }
-          return;
-        }
+      setTxInfo({
+        status: receipt.status ? 'Success' : 'Fail',
+        blockNumber: Number(tx.blockNumber),
+        from: tx.from,
+        to: tx.to,
+        value: weiToKaia(tx.value),
+        gasPrice: gasPriceKAIA,
+        effectiveGasPrice: effPriceKAIA,
+        gasUsed,
+        gasLimit: Number(tx.gas),
+        txFee: txFeeKAIA,
+        nonce: tx.nonce,
+        methodSig: tx.input?.slice(0, 10),
+        timestamp: Number(block.timestamp),
+      });
+    })();
+  }, [txHash]);
 
-        const receipt = await getTransactionReceipt(txHash);
-        if (isMounted) {
-          setTransaction(receipt);
-          setTxDetails(tx);
-          setPending(false);
-          setAmount(fromWei(tx.value));
-          setGasPrice(fromWei(tx.gasPrice));
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError('트랜잭션 정보를 불러오는 중 오류가 발생했습니다.');
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    fetchTx();
-
-    const interval = setInterval(() => {
-      if (pending) {
-        fetchTx();
-      } else {
-        clearInterval(interval);
-      }
-    }, 5000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [txHash, pending]);
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
-  if (pending) return <p>⏳ 트랜잭션이 아직 처리 중입니다...</p>;
-  if (!transaction) return <p>트랜잭션 정보를 찾을 수 없습니다.</p>;
+  if (!txInfo) return <p style={{ textAlign: 'center' }}>Loading…</p>;
 
   return (
-    <div>
-      <h1>Transaction Detail</h1>
-      <p>
-        <strong>Hash:</strong> {txHash}
-      </p>
-      <p>
-        <strong>Status:</strong>{' '}
-        {transaction.status ? '✅ Success' : '❌ Failed'}
-      </p>
-      <p>
-        <strong>From:</strong> {txDetails.from}
-      </p>
-      <p>
-        <strong>To:</strong> {txDetails.to}
-      </p>
-      <p>
-        <strong>Amount:</strong> {amount} KAIA
-      </p>
-      <p>
-        <strong>Gas Used:</strong> {transaction.gasUsed}
-      </p>
-      <p>
-        <strong>Gas Price: </strong>
-        {gasPrice} KAIA
-      </p>
+    <div className="tx-card">
+      <h2>
+        Transaction&nbsp;
+        <span className={`badge ${txInfo.status === 'Success' ? 'success' : 'fail'}`}>
+          {txInfo.status}
+        </span>
+      </h2>
+
+      <table>
+        <tbody>
+          <tr><th>Block #</th><td>{txInfo.blockNumber}</td></tr>
+          <tr><th>From</th><td className="mono">{txInfo.from}</td></tr>
+          <tr><th>To</th><td className="mono">{txInfo.to ?? '-'}</td></tr>
+          <tr><th>Amount</th><td>{txInfo.value} KAIA</td></tr>
+          <tr><th>Gas Price</th><td>{txInfo.gasPrice} KAIA</td></tr>
+          <tr><th>Effective Gas Price</th><td>{txInfo.effectiveGasPrice} KAIA</td></tr>
+          <tr><th>Gas Used</th><td>{txInfo.gasUsed.toLocaleString()}</td></tr>
+          <tr><th>Gas Limit</th><td>{txInfo.gasLimit.toLocaleString()}</td></tr>
+          <tr><th>TX Fee</th><td>{txInfo.txFee} KAIA</td></tr>
+          <tr><th>MethodSig</th><td className="mono">{txInfo.methodSig ?? '-'}</td></tr>
+          <tr><th>Time</th>
+              <td>{new Date(txInfo.timestamp * 1000).toLocaleString('ko-KR', { hour12: false })}</td></tr>
+          <tr><th>Nonce</th><td>{txInfo.nonce}</td></tr>
+        </tbody>
+      </table>
     </div>
   );
-};
-
-export default TransactionDetail;
+}

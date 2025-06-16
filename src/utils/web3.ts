@@ -2,10 +2,7 @@ import Web3 from 'web3';
 import { Numbers } from 'web3-types';
 
 const web3 = new Web3('https://public-en-kairos.node.kaia.io');
-
 export default web3;
-
-
 
 export const getBlock = async (blockNumber?: number) => {
   const block = await web3.eth.getBlock(blockNumber ?? 'latest');
@@ -31,4 +28,14 @@ export const getNetworkStatus = async () => {
 
 export const fromWei = (amount: Numbers) => {
   return web3.utils.fromWei(amount, 'ether');
+
+  
 };
+
+export const getNetworkHealthy = async () => {
+  const [ok, peers] = await Promise.all([
+    web3.eth.net.isListening(),
+    web3.eth.net.getPeerCount(),
+  ]);
+  return ok && peers > 2;
+}
