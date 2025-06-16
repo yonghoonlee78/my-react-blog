@@ -85,6 +85,17 @@ React에서 State를 업데이트할 때는 항상 새로운 객체나 배열을
     category: '블록체인',
     
     route: '/mnemonic-wallet',
-  }
+  },
+
+  {
+    id: 'explorer',
+    title: 'Kaia 블록체인 익스플로러',
+    content: '온체인 트랜잭션 및 블록 데이터를 조회하는 React 기반 Explorer',
+    date: '2025-06-16',
+    tags: ['Kaia', 'explorer', 'testnet'],
+    category: '블록체인',
+    route: '/explorer',   
+    
+  },
 ];
 

@@ -9,6 +9,9 @@ import AboutPage from './components/AboutPage';
 import NotFoundPage from './components/NotFoundPage';
 import { Post } from './types/Post';
 import { initialPosts } from './data';
+import Home from './pages/Home';
+import BlockDetail from './pages/BlockDetail';
+import TransactionDetail from './pages/TransactionDetail';
 
 const App: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -25,6 +28,11 @@ const App: React.FC = () => {
           <Route path="/mnemonic-wallet" element={<MnemonicWallet />} />
           <Route path="/my-react-blog" element={<PostList posts={posts} />} />
           <Route path="*" element={<NotFoundPage />} />
+          <Route path="/" element={<PostList posts={posts} />} />
+          <Route path="/post/:id" element={<PostDetail posts={posts} />} />
+          <Route path="/explorer" element={<Home />} />
+          <Route path="/explorer/block/:blockNumber" element={<BlockDetail />} />
+          <Route path="/explorer/tx/:txHash" element={<TransactionDetail />} />
         </Routes>
       </Layout>
     </Router>
