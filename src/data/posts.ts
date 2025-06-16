@@ -35,5 +35,16 @@ export const posts: Post[] = [
     tags: ['Kaia', 'Wallet', 'Mnemonic', 'ethers.js'],
     category: '블록체인',
     route: '/mnemonic-wallet' 
+  },
+
+  {
+    id: 'explorer',
+    title: 'Kaia 블록체인 익스플로러',
+    content: '온체인 트랜잭션 및 블록 데이터를 조회하는 React 기반 Explorer',
+    date: '2025-06-16',
+    tags: ['Kaia', 'Explorer', 'testnet'],
+    category: '블록체인',
+    route: '/explorer',   
+    
   }
 ];
