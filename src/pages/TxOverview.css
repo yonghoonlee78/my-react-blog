@@ -1,0 +1,27 @@
+.tx-card {
+    background: #fff;
+    color: #1a1a1a;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    max-width: 1080px;
+    margin: 24px auto;
+    font-family: system-ui, sans-serif;
+  }
+  
+  h2 { margin-top: 0; font-size: 28px; }
+  
+  .badge {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 16px;
+    color: #fff;
+  }
+  .badge.success { background:#39c07a; }
+  .badge.fail    { background:#d9534f; }
+  
+  table { width:100%; border-collapse: collapse; margin-top: 24px; }
+  th,td { text-align:left; padding:8px 0; }
+  th { width:180px; color:#666; font-weight:600; }
+  td.mono { font-family: 'Courier New', monospace; word-break: break-all; }
+  

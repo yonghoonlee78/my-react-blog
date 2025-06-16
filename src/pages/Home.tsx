@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
 import SearchBar from '../components/SearchBar';
 import { getBlock, getNetworkStatus } from '../utils/web3';
 
@@ -31,15 +30,11 @@ const Home = () => {
   }, []);
 
   return (
-    <div>
+    <div style={{ textAlign: 'center', color: 'deepskyblue' }}>
+      <h1 style={{ marginBottom: '0.5rem', fontSize: '2rem' }}>Kaia Explorer</h1>
+    
       <SearchBar />
-      <h2>Latest Block: {blockNum ? blockNum : 'Loading...'}</h2>
-      <h2>
-        Network Status:{' '}
-        {networkStatus
-          ? 'Network is healthy ^___^'
-          : 'Network is unhealthy ㅠ___ㅠ'}
-      </h2>
+    
     </div>
   );
 };

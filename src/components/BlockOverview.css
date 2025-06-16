@@ -1,0 +1,48 @@
+.overview-card {
+  max-width: 960px;
+  margin: 2rem auto;
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  color: #222;
+}
+
+.overview-card h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #007bff;
+}
+
+.overview-card .badge {
+  background-color: #007bff;
+  color: white;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.overview-card table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.overview-card th {
+  text-align: left;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  width: 180px;
+}
+
+.overview-card td {
+  padding: 8px 12px;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+}
+
+.overview-card .hash {
+  font-size: 0.95rem;
+  color: #444;
+}
