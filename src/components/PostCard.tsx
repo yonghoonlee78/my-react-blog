@@ -8,12 +8,11 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   return (
-    <Link to={post.route ?? `/blog/${post.id}`}   
-  className="post-link"
->
+    <Link to={post.route ?? `/post/${post.id}`} className="post-link">
       <div className="post-card-content">
         <h3>{post.title}</h3>
         <p>{post.date} | {post.category}</p>
+
         <div className="tags">
           {post.tags.map(tag => (
             <span key={tag} className="tag">{tag}</span>

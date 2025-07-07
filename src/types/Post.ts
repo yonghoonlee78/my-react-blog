@@ -5,5 +5,6 @@ export interface Post {
   date: string;
   tags: string[];
   category: string;
-  route?: string;      
+  route?: string;    
+  type?: string;  
 }

@@ -68,7 +68,7 @@ const PostList: React.FC<PostListProps> = ({ posts }) => {
         {filteredPosts.length > 0 ? (
           filteredPosts.map(post => (
             <div key={post.id} className="post-card">
-              <Link to={post.route ?? `/post/${post.id}`} className="post-link">
+            <Link to={`/post/${post.id}`} className="post-link">
                 <h3>{post.title}</h3>
                 <p className="post-meta">{post.date} | {post.category}</p>
                 <div className="post-tags">
