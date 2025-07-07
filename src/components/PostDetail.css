@@ -1,4 +1,3 @@
-/* src/components/PostDetail.css */
 .post-detail-container {
     padding: 30px;
     background-color: #282c34;
@@ -76,23 +75,37 @@
     font-style: italic;
   }
   
-  .back-button {
-    display: block;
-    width: 200px;
-    padding: 12px 20px;
-    background-color: #61dafb;
-    color: #20232a;
+  .back-button,
+  a.back-button,
+  a.back-button:visited,
+  a.back-button:hover,
+  a.back-button:active {
+    background: slateblue !important;
+    color: #181818 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 64px;
+    margin: 48px auto 0 auto;
     border: none;
-    border-radius: 5px;
-    font-size: 1.1em;
+    border-radius: 13px;
+    font-size: 1em;
+    font-weight: 1000;
     cursor: pointer;
-    margin: 30px auto 0 auto; 
-    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 8px rgba(100,150,180,0.13);
+    transition: background 0.22s, color 0.22s;
+    text-decoration: none !important;
+    text-align: center;
   }
   
   .back-button:hover {
-    background-color: #4dc2ea;
+    background: #61dafb !important;
+    color: #20232a !important;
+    text-decoration: underline !important;
   }
+  
+
   
   .post-detail-loading {
     text-align: center;
@@ -109,5 +122,28 @@
     }
     .post-detail-title {
       font-size: 2em;
+    }
+
+  
+    .markdown pre {
+      background: #232629 !important;
+      color: #d9f99d !important;
+      border-radius: 10px !important;
+      padding: 1.2rem 1.5rem !important;
+      margin: 1.5rem 0 !important;
+      font-size: 1.1rem !important;
+      overflow-x: auto !important;
+    }
+
+
+    .markdown code {
+      background: none;
+      color: #d9f99d;
+      font-family: 'Fira Mono', 'Menlo', 'Consolas', 'monospace';
+    }
+
+    .mnemonic-desc {
+      padding-left: 0rem;
+      padding-right : 
     }
   }
