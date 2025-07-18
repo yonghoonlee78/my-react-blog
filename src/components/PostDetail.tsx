@@ -10,7 +10,16 @@ import "../components/PostDetail.css"
 import KaiaMnemonicWallet from "../pages/MnemonicWallet";
 import KaiaExplorer from "../components/SearchBar";
 import NFTExplorer from "./NFTExplorer";
+import NFTTransfer from "../components/NFTTransfer";
+import NFTEventListener from "./NFTEventListener";
+import NFTQuery from "../components/NFTQuery";
+import WalletDashboard from "./WalletDashboard";
+import AssetDashboard from "./AssetDashboard";
+import UpgradeUIcontact from "../components/UpgradeUIcontract";
+import BettingGame from "../components/BettingGame";
 
+
+const userAddress = "0xf3a9d84E06363a251bE733E8F2bFCa1849b3c512"
 
 const PostDetail: React.FC = () => {
   const { id } = useParams();
@@ -149,7 +158,178 @@ const PostDetail: React.FC = () => {
       </main>
     );
   }
+
+  if (post.type === "nft-transfer") {
+    return (
+      <main style={{ padding: "2rem" }}>
+        <h1>🖼️ {post.title}</h1>
+        <p style={{ color: "#999", fontSize: "0.9rem" }}>
+          {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
+        </p>
+        <div style={{ margin: "2rem 0" }}>
+          <NFTTransfer />
+        </div>
+        <div style={{ marginTop: "2rem" }}>
+          <Link
+            to="/"
+            style={{
+              background: "#7ee3ff",
+              padding: "0.7rem 2rem",
+              borderRadius: "6px",
+              color: "#000",
+            }}
+          >
+            목록으로 돌아가기
+          </Link>
+        </div>
+      </main>
+    );
+  }
+  if (!post) {
+    return (
+      <main style={{ padding: '2rem', maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+        <h1>게시물을 찾을 수 없습니다.</h1>
+        <div style={{ marginTop: '2rem' }}>
+          <Link to="/" style={{
+            background: "#7ee3ff",
+            padding: "0.7rem 2rem",
+            borderRadius: "6px",
+            color: "#000",
+          }}>목록으로 돌아가기</Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (post.id === "sepolia-nft-listener") { 
+    return (
+      <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
+        <h1>{post.title}</h1>
+        <p style={{ color: "#999", fontSize: "0.9rem" }}>
+          {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
+        </p>
+        <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+          {post.content}
+        </ReactMarkdown>
+        <div style={{ margin: "2rem 0" }}>
+          {/* NFTEventListener 컴포넌트 렌더링 */}
+          <NFTEventListener/>
+        </div>
+        <div style={{ marginTop: "2rem" }}>
+          <Link to="/" style={{
+            background: "#7ee3ff",
+            padding: "0.7rem 2rem",
+            borderRadius: "6px",
+            color: "#000",
+          }}>목록으로 돌아가기</Link>
+        </div>
+      </main>
+    );
+  }
   
+  if (post.type === "wallet-dashboard" || post.id === "wallet-dashboard") {
+    return (
+      <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
+        <h1>{post.title}</h1>
+        <p style={{ color: "#999", fontSize: "0.9rem" }}>
+          {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
+        </p>
+        <ReactMarkdown>{post.content}</ReactMarkdown>
+        <div style={{ margin: "2rem 0" }}>
+          <WalletDashboard />
+        </div>
+        <div style={{ marginTop: "2rem" }}>
+          <Link to="/" style={{
+            background: "#7ee3ff",
+            padding: "0.7rem 2rem",
+            borderRadius: "6px",
+            color: "#000",
+          }}>목록으로 돌아가기</Link>
+        </div>
+      </main>
+    );
+  }
+
+
+  if (post.id === "upgradeable-contract-manager") {
+    return (
+      <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
+        <h1>{post.title}</h1>
+
+        {/* --- 이 부분을 추가하세요 --- */}
+        <p style={{ color: '#ffc107', marginTop: '-10px', marginBottom: '20px', fontSize: '0.9em', fontStyle: 'italic' }}>
+          필수 : 메타마스크 -&gt; Owner 0xf3a9d84E06363a251bE733E8F2bFCa1849b3c512
+        </p>
+
+        <p style={{ color: "#999", fontSize: "0.9rem" }}>
+          {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
+        </p>
+        <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+          {post.content}
+        </ReactMarkdown>
+        
+        <div style={{ margin: "2rem 0", border: "1px solid #444", padding: "20px", borderRadius: "8px" }}>
+          <UpgradeUIcontact /> {/* 이전에 수정한 컴포넌트 이름 */}
+        </div>
+
+        <div className="center-btn-container">
+          <Link to="/" className="back-button">
+            목록으로 돌아가기
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (post.id === "token-bet-mini-game" || post.type === "betting-game") {
+    return (
+      <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
+        <h1>{post.title}</h1>
+        <p style={{ color: "#999", fontSize: "0.9rem" }}>
+          {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
+        </p>
+        <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+          {post.content}
+        </ReactMarkdown>
+        <div style={{ margin: "2rem 0" }}>
+          <BettingGame />
+        </div>
+        <div style={{ marginTop: "2rem" }}>
+          <Link to="/" className="back-button">목록으로 돌아가기</Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (
+    post.type === "feature" ||
+    post.id === "erc1155-all-assets-dashboard"
+  ) {
+    return (
+      <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
+        <h1>{post.title}</h1>
+        <p style={{ color: "#999", fontSize: "0.9rem" }}>
+          {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
+        </p>
+        <ReactMarkdown>{post.content}</ReactMarkdown>
+        <div style={{ margin: "2rem 0" }}>
+          <AssetDashboard />
+        </div>
+        <div style={{ marginTop: "2rem" }}>
+          <Link to="/" style={{
+            background: "#7ee3ff",
+            padding: "0.7rem 2rem",
+            borderRadius: "6px",
+            color: "#000",
+          }}>
+            목록으로 돌아가기
+          </Link>
+        </div>
+      </main>
+    );
+   }
+
+
   return (
     <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
       <h1>{post.title}</h1>
@@ -167,6 +347,10 @@ const PostDetail: React.FC = () => {
       
     </main>
   );
+  
 };
+
+
+
 
 export default PostDetail;
