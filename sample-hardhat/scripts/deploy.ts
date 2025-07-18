@@ -1,7 +1,10 @@
 import { ethers } from "hardhat";
+
 async function main() {
   const SimpleContract = await ethers.getContractFactory("SimpleContract");
-  const simple = await SimpleContract.deploy("Hello from Sepolia!");
+
+  const simple = await SimpleContract.deploy("Hello from Kaia!");
+
   await simple.waitForDeployment();
 
   console.log(`✅ Deployed to: ${simple.target}`);

@@ -7,4 +7,5 @@ export interface Post {
   category: string;
   route?: string;    
   type?: string;  
+  contractAddress?: string; 
 }

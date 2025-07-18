@@ -17,6 +17,9 @@ import ContractInfo from './components/ContractInfo';
 
 import { initialPosts } from './data';
 import type { Post } from './types/Post';
+import WalletDashboard from './components/WalletDashboard';
+import AssetDashboard from './components/AssetDashboard';
+import NFTEventListener from './components/NFTEventListener';
 
 
 const App: React.FC = () => {
@@ -40,10 +43,12 @@ const App: React.FC = () => {
           <Route path="/explorer" element={<Home />} />
           <Route path="/explorer/block/:blockNumber" element={<BlockDetail />} />
           <Route path="/explorer/tx/:txHash" element={<TransactionDetail />} />
+          <Route path="/kaiatestnet-event-listener" element={<NFTEventListener />} />
 
           <Route path="/contract-info" element={<ContractInfo />} />
+          <Route path="/wallet-dashboard" element={<WalletDashboard />} />
+          <Route path="/erc1155-all-assets-dashboard" element={<AssetDashboard />} />
 
-      
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Layout>
