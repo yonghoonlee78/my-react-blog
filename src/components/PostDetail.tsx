@@ -14,9 +14,23 @@ import NFTTransfer from "../components/NFTTransfer";
 import NFTEventListener from "./NFTEventListener";
 import NFTQuery from "../components/NFTQuery";
 import WalletDashboard from "./WalletDashboard";
-import AssetDashboard from "./AssetDashboard";
 import UpgradeUIcontact from "../components/UpgradeUIcontract";
 import BettingGame from "../components/BettingGame";
+import Web3Profile from "../components/Web3Profile";
+import ERC1155MintForm from "./erc1155-start/ERC1155MintForm";
+import BalanceOfBatchSection from "./erc1155-start/BalanceOfBatchSection";
+import ERC1155MintAndBalance from "./erc1155-start/ERC1155MintAndBalance";
+import ERC1155TransferAndBalance from "./erc1155-start/ERC1155TransferAndBalance";
+import BatchTransferSection from "./erc1155-start/BatchTransferSection";
+import SafeBatchTransferSection from "./erc1155-start/SafeBatchTransferSection";
+import ApprovalSection from "./erc1155-start/ApprovalSection";
+import ERC1155EventListener from "./erc1155-start/ERC1155EventListener";
+import ERC1155Page from "../components/erc1155-start/ERC1155Page";
+import ERC2612Demo from "./erc2612-demo"; 
+import ERC2771Demo from "./erc2771-demo";
+import MiniMiner from "./MiniMiner";
+
+
 
 
 const userAddress = "0xf3a9d84E06363a251bE733E8F2bFCa1849b3c512"
@@ -301,33 +315,98 @@ const PostDetail: React.FC = () => {
     );
   }
 
-  if (
-    post.type === "feature" ||
-    post.id === "erc1155-all-assets-dashboard"
-  ) {
-    return (
-      <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
-        <h1>{post.title}</h1>
-        <p style={{ color: "#999", fontSize: "0.9rem" }}>
-          {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
-        </p>
-        <ReactMarkdown>{post.content}</ReactMarkdown>
-        <div style={{ margin: "2rem 0" }}>
-          <AssetDashboard />
-        </div>
-        <div style={{ marginTop: "2rem" }}>
-          <Link to="/" style={{
-            background: "#7ee3ff",
-            padding: "0.7rem 2rem",
-            borderRadius: "6px",
-            color: "#000",
-          }}>
-            목록으로 돌아가기
-          </Link>
-        </div>
-      </main>
-    );
-   }
+  if (post.id === "web3-profile") {
+  return (
+    <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
+      <h1>{post.title}</h1>
+      <p style={{ color: "#999", fontSize: "0.9rem" }}>
+        {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
+      </p>
+      <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+        {post.content}
+      </ReactMarkdown>
+
+      <div style={{ margin: "2rem 0" }}>
+        <Web3Profile />
+      </div>
+
+      <div className="center-btn-container">
+        <Link to="/" className="back-button">
+          목록으로 돌아가기
+        </Link>
+      </div>
+    </main>
+  );
+}
+
+if (post.id === "erc1155-all-assets-dashboard") {
+  return (
+    <main style={{ padding: "2rem" }}>
+      <ERC1155Page />
+      <div style={{ textAlign: "center", marginTop: "2rem" }}>
+        <Link to="/" className="back-button">← 목록으로</Link>
+      </div>
+    </main>
+  );
+}
+
+if (post.id === "erc2612-sepolia-permit-demo") {
+  return (
+    <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
+      <h1>{post.title}</h1>
+      <p style={{ color: "#999", fontSize: "0.9rem" }}>
+        {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
+      </p>
+      <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+        {post.content}
+      </ReactMarkdown>
+      <div style={{ margin: "2rem 0" }}>
+      <ERC2612Demo />
+      </div>
+      <Link to="/" className="back-button">목록으로 돌아가기</Link>
+    </main>
+  );
+}
+
+
+if (post.id === "erc2771-meta-tx-demo") {
+  return (
+    <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
+      <h1>{post.title}</h1>
+      <p style={{ color: "#999", fontSize: "0.9rem" }}>
+        {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
+      </p>
+      <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+        {post.content}
+      </ReactMarkdown>
+      <div style={{ margin: "2rem 0" }}>
+      <ERC2771Demo />
+      </div>
+      <Link to="/" className="back-button">목록으로 돌아가기</Link>
+    </main>
+  );
+}
+
+if (post.id === "mini-pow-miner-demo") {
+  return (
+    <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
+      <h1>{post.title}</h1>
+      <p style={{ color: "#999", fontSize: "0.9rem" }}>
+        {post.date} | {post.category} | 태그: {post.tags?.join(", ")}
+      </p>
+      <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+        {post.content}
+      </ReactMarkdown>
+      <div style={{ margin: "3rem 0" }}>
+        <MiniMiner />
+      </div>
+      <Link to="/" className="back-button">
+        목록으로 돌아가기
+      </Link>
+    </main>
+  );
+}
+
 
 
   return (

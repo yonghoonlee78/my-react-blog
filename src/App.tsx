@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 
+
 import Layout from './components/Layout';
 import PostList from './components/PostList';
 import PostDetail from './components/PostDetail';
@@ -18,8 +19,13 @@ import ContractInfo from './components/ContractInfo';
 import { initialPosts } from './data';
 import type { Post } from './types/Post';
 import WalletDashboard from './components/WalletDashboard';
-import AssetDashboard from './components/AssetDashboard';
 import NFTEventListener from './components/NFTEventListener';
+import Web3Profile from './components/Web3Profile';
+import MiniMiner from './components/MiniMiner';
+
+console.log("ALCHEMY_ENV_KEY:", process.env.REACT_APP_ALCHEMY_API_KEY);
+
+
 
 
 const App: React.FC = () => {
@@ -47,8 +53,22 @@ const App: React.FC = () => {
 
           <Route path="/contract-info" element={<ContractInfo />} />
           <Route path="/wallet-dashboard" element={<WalletDashboard />} />
-          <Route path="/erc1155-all-assets-dashboard" element={<AssetDashboard />} />
 
+
+          <Route path="/web3-profile" element={<Web3Profile />} />
+
+          {/* ⭐️ MiniMiner 단독 실습 페이지 ROUTE 추가 */}
+          <Route
+            path="/mini-miner"
+            element={
+              <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
+                <h1>나만의 블록체인 미니 채굴 실습</h1>
+                <MiniMiner />
+              </main>
+            }
+          />
+
+          {/* 404 Not Found */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Layout>

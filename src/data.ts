@@ -222,8 +222,9 @@ React 기반 UI를 구성하고 있으며 사용자 인터페이스를 개선해
     title: "메타마스크 자산 대시보드 (토큰/NFT 조회 & 전송)",
     content: `
   ### 메타마스크 연동 자산 조회 대시보드
-  - 메타마스크 연결 후, 내 지갑의 **모든 ERC-20 토큰 및 NFT**를 자동으로 조회합니다.
-  - 앞으로 NFT/토큰 전송 기능도 추가 예정!
+  - Metamask Address : 0xf3a9d84E06363a251bE733E8F2bFCa1849b3c512 
+  - 위 주소만을 연결해야 되며,네이티브코인,그외 토큰,NFT를 조회
+  - 마지막으로 해당 주소의 토큰을 전송하는 기능추가
   `,
     date: "2025-07-10",
     tags: ["MetaMask", "Dashboard", "Token", "NFT", "Kaia", "Ethereum", "Sepolia"],
@@ -233,14 +234,16 @@ React 기반 UI를 구성하고 있으며 사용자 인터페이스를 개선해
   },
   {
     id: "erc1155-all-assets-dashboard",
-    title: "ERC1155 Multisearch & All-Event Asset Dashboard",
+    title: "ERC1155 MultiFunction",
     content: `
 ### 과제 목표
 
-내가 배포한 커스텀 ERC1155 스마트컨트랙트에서
-- **민트, 강화, 합성 등 여러가지 이벤트로 생성된 토큰** 전부
-- **토큰ID, 토큰별 수량(balance), 모든 변화 이력**
-- **ERC-20, ERC-721, ERC-1155까지**실시간으로 한 번에 조회.
+내가 배포한 커스텀 ERC1155 스마트컨트랙트를 통해
+- FT , SFT , NFT 토큰들을 조회하고 아래 기능을 구현한다.
+- 1.Balance Of Batch. 
+- 2.Batch Transfer. 
+- 3.Safe Batchtransfer from.
+- 4.Set ApproveForAll. 
 
     `,
     date: "2025-07-11",
@@ -293,8 +296,174 @@ React UI에서 버튼 클릭만으로 **프록시 패턴** 기반의 업그레�
     category: "미니게임",
     route: "/mini-game",
     type: "feature"
-  }
+  },
 
+  {
+    id: "staking-service",
+    title: "Sepolia Staking Service: 토큰 스테이킹 · 보상 대시보드",
+    content: `
+  ## Sepolia 스테이킹 서비스
+  
+  React + 타입스크립트 기반 UI로 구현한 **통합 스테이킹 & 보상 관리 대시보드**입니다.
+  
+  ---
+  
+  ### 🎯 유저 인터페이스(스테이킹 주요 기능)
+  
+  - **내가 보유한 토큰 수량 입력 → [Stake] 버튼**  
+    ↳ 바로 스테이킹, 시간 기록으로 보상 계산 시작
+  - **누적 수익 / 지금까지 받을 수 있는 보상** 실시간 표시 및 [Claim] 버튼
+  - [Unstake]로 **전체 혹은 일부 출금** (출금시 보상도 자동 정산)
+  - **고정·변동 APY** 지원: 관리자가 시장 상황에 따라 보상률 변경 가능
+  - **보상풀 잔액/모니터링**: 보상 토큰 풀의 잔액, 지급 가능 여부 알림
+  
+  ---
+  
+  ### 🛠️ 관리자 인터페이스(운영·정책 기능)
+  
+  - **보상률(APY) 실시간 조정** (슬라이더/입력값, 고정 ↔ 변동 전환)
+  - **보상풀 충전·인출**: 보상 토큰 예치 및 비상출금
+  - **긴급 정지/재개(PAUSE/UNPAUSE)**: 컨트랙트 운영의 즉시 중단/재가동
+  - **락업 기간 설정**: 스테이킹 직후 일정 기간 출금 제한 (Lock-up)
+  - **자동 컴파운드(복리) 옵션**: 받은 보상을 자동스테이킹으로 복리 효과
+  - **수수료율 관리**: 스테이킹/인출 시 프로젝트 운영을 위한 수수료 부과
+  
+  ---
+  
+  ### 💡 개발기술 및 보안
+  
+  - OpenZeppelin Pausable, AccessControl, ERC20 컨트랙트로 표준·보안성 강화!
+  - 컨트랙트 기반, 프론트엔드 실시간 연동 (Web3.js, ethers.js 지원)
+  - 관리자·일반 유저 권한 명확 분리
+  
+  ---
+  
+  ### 앞으로 추가될 예정
+  
+  - 스테이킹 대시보드 실시간 차트
+  - 구체적인 이율 계산 로직·백테스트 데이터 공개
+  - 풀 잔액 바닥 알람/자동 충전 기능 등 고도화
+  
+  `,
+    date: "2025-07-18",
+    tags: [
+      "Sepolia", "Staking", "ERC20", "Dashboard", "APY", "Compound", "Lockup",
+      "Admin", "OpenZeppelin", "Web3", "React", "보상", "유저인터페이스", "관리자"
+    ],
+    category: "스테이킹",
+    route: "/staking",
+    type: "feature"
+  },
+
+  {
+    id: "web3-profile",
+    title: "Web3 프로필 (wagmi 연동 예제)",
+    content: String.raw`
+    ## Web3 프로필 dApp (wagmi.js)
+    
+    - **이더리움/테스트넷 지갑 연결, ENS 이름/잔액/프로필, 팁 후원, 체인 전환** 등 다양한 Web3 기능을 체험할 수 있는 페이지입니다.
+    - React와 wagmi 라이브러리, Ethers.js 기반 최신 예제 적용!
+    ---
+    ### 구현 기능
+    - 지갑 연결/연결 해제 (MetaMask, WalletConnect 등 다양한 선택)
+    - ENS 이름 자동 조회 및 표시
+    - 내 지갑 주소, 네트워크/잔액 실시간 표시
+    - 개발자 후원을 위한 ETH 전송(팁 보내기) 기능
+    - 전송 내역(Tx해시) 저장 및 Etherscan 바로가기
+    - 멀티체인(메인넷/세폴리아/폴리곤Amoy 등) 직접 네트워크 전환
+    - 각종 주소/트랜잭션 클릭 시 Etherscan 바로가기 지원
+    ---
+    ### 어떻게 활용하나요?
+    React 블로그 프로젝트 내 \`/web3-profile\` 라우트와 메뉴에 연결해 활용하세요!
+    wagmi 설정 예시, 전체 코드, 활용법은 블로그 포스트 및 깃허브에서 추가로 확인 가능합니다.
+  `,
+    date: "2025-07-18",
+    tags: ["Web3", "Ethereum", "wagmi", "프로필", "후원", "지갑연동"],
+    category: "기타",
+    route: "/web3-profile",
+    type: "feature"
+  },
+  {
+    id: 'erc2612-sepolia-permit-demo',
+    title: 'ERC-2612: 세폴리아 네트워크에서 Permit · 가스 없는 토큰 승인 실습',
+    content: `
+  ## ERC-2612 Permit 기능 직접 실습하기
+  ---
+  **ERC-2612**는 서명만으로 토큰 승인을 가능하게 하는 표준입니다.  
+  수수료(가스비) 없이, 내 ERC-20 토큰 권한을 상대방에게 허락(Permit)해주고  
+  진짜 트랜잭션은 Relayer(플랫폼)이 대신 보내는 과정을 Sepolia에서 직접 구현해볼 수 있어요!
+  
+  ### 주요 실습 흐름
+  - 컨트랙트 배포: OpenZeppelin ERC20Permit(2612 확장) 기반
+  - 프론트에서 서명 메시지 만들기(EIP-712)
+  - 메타마스크 서명 요청(permit)
+  - permit 트랜잭션 전송 및 결과 확인
+  
+  ### 포함 UI 
+  - 잔액 조회, 승인 내역 확인
+  - permit 기능 테스트(버튼 클릭 한방!)
+  - 이벤트 로그 및 트랜잭션 해시 실시간 보기
+  
+  ### 공부 포인트
+  - 신뢰할 수 있는 EIP-712 메시지 구조
+  - nonces, DOMAIN_SEPARATOR, v/r/s 서명 원리
+  - DeFi & 지갑/게임 연동 실전 경험 축적
+  `,
+    date: '2025-07-12',
+    tags: ['ERC2612', 'Permit', 'Sepolia', '가스없는승인', 'EIP712', '블록체인', '스마트컨트랙트'],
+    category: '블록체인',
+    route: '/erc2612-demo',
+    type: 'feature'
+  },
+  {
+    id: 'erc2771-meta-tx-demo',
+    title: 'ERC-2771: 메타트랜잭션 실전 · 세폴리아 MinimalForwarder 체험',
+    content: `
+  ## ERC-2771 & 메타트랜잭션 실전 체험
+  ---
+  ERC-2771은 메타트랜잭션(유저가 직접 가스비 없이 행동!)의 표준!  
+  MinimalForwarder 컨트랙트와 실제 서비스 컨트랙트(Recipient)를 배포·연동하여  
+  Relayer가 대리 서명, 진짜 사용자는 이더 없이도 주인처럼 트랜잭션을 실행할 수 있습니다.
+  
+  ### 주요 실습 시나리오
+  - MinimalForwarder 컨트랙트 배포
+  - 타깃 컨트랙트(ERC2771Context) 배포 및 연결
+  - 프론트엔드에서 메타트랜잭션 메시지 생성, 서명, Relayer로 전송
+  - _msgSender()로 실제 사용자인지 확인
+  
+  ### 구현 UI 예시
+  - 실제 doSomething(), 상태변화 등 메타트랜잭션 체험 버튼
+  - Relayer/유저의 주소 구분 및 이벤트 로그 확인
+  - 서명 메시지, 실행 결과, 트랜잭션 해시 즉시 출력
+  
+  ### 실습 목표
+  - 메타트랜잭션 핵심 데이터/서명 구조이해
+  - TrustedForwarder의 역할
+  - 지갑 없이 DApp 체험 UX 구현법
+  `,
+    date: '2025-07-13',
+    tags: ['ERC2771', '메타트랜잭션', 'MinimalForwarder', 'Sepolia', 'Relayer', 'Web3', '실습'],
+    category: '블록체인',
+    route: '/erc2771-demo',
+    type: 'feature'
+  },
+
+  {
+    id: 'mini-pow-miner-demo',
+    title: '프론트엔드로 구현한 미니 블록체인 채굴 시뮬레이터',
+    content: `
+  ## JS/React로 직접 체험하는 "Proof of Work" 채굴 이해
+  
+  블록체인 채굴(PoW)이란 무엇일까?  
+  비트코인, 이더리움(초기), 도지코인 등 모든 PoW 기반 블록체인은  
+  **특정 해시 퍼즐 — (예: 해시 앞자리 0이 N개)** 가 나올 때까지 수십만 번의 Nonce(임의 숫자)를 바꿔가며  
+  해당 조건을 만족하는 값을 찾는 연산을 반복합니다.
+  `,
+  date: '2025-07-23',
+  tags: ['블록체인', '채굴', 'PoW', 'SHA256', 'React', '시뮬레이터', 'Nonce', '해시', '실습'],
+  route: '/post/mini-pow-miner-demo',
+  category: '블록체인',
+},
 
 
 
