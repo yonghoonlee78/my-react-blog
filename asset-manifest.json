@@ -1,15 +1,25 @@
 {
   "files": {
-    "main.css": "/my-react-blog/static/css/main.e310a883.css",
-    "main.js": "/my-react-blog/static/js/main.01436632.js",
-    "static/js/453.6105f00e.chunk.js": "/my-react-blog/static/js/453.6105f00e.chunk.js",
+    "main.css": "/my-react-blog/static/css/main.ff3d69b6.css",
+    "main.js": "/my-react-blog/static/js/main.2a8e5239.js",
+    "static/js/278.2e8f8ed6.chunk.js": "/my-react-blog/static/js/278.2e8f8ed6.chunk.js",
+    "static/js/349.bdbcc447.chunk.js": "/my-react-blog/static/js/349.bdbcc447.chunk.js",
+    "static/js/491.e77fc62d.chunk.js": "/my-react-blog/static/js/491.e77fc62d.chunk.js",
+    "static/js/66.99cbbf26.chunk.js": "/my-react-blog/static/js/66.99cbbf26.chunk.js",
+    "static/js/453.f2857321.chunk.js": "/my-react-blog/static/js/453.f2857321.chunk.js",
+    "static/js/40.bd6a9f96.chunk.js": "/my-react-blog/static/js/40.bd6a9f96.chunk.js",
     "index.html": "/my-react-blog/index.html",
-    "main.e310a883.css.map": "/my-react-blog/static/css/main.e310a883.css.map",
-    "main.01436632.js.map": "/my-react-blog/static/js/main.01436632.js.map",
-    "453.6105f00e.chunk.js.map": "/my-react-blog/static/js/453.6105f00e.chunk.js.map"
+    "main.ff3d69b6.css.map": "/my-react-blog/static/css/main.ff3d69b6.css.map",
+    "main.2a8e5239.js.map": "/my-react-blog/static/js/main.2a8e5239.js.map",
+    "278.2e8f8ed6.chunk.js.map": "/my-react-blog/static/js/278.2e8f8ed6.chunk.js.map",
+    "349.bdbcc447.chunk.js.map": "/my-react-blog/static/js/349.bdbcc447.chunk.js.map",
+    "491.e77fc62d.chunk.js.map": "/my-react-blog/static/js/491.e77fc62d.chunk.js.map",
+    "66.99cbbf26.chunk.js.map": "/my-react-blog/static/js/66.99cbbf26.chunk.js.map",
+    "453.f2857321.chunk.js.map": "/my-react-blog/static/js/453.f2857321.chunk.js.map",
+    "40.bd6a9f96.chunk.js.map": "/my-react-blog/static/js/40.bd6a9f96.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.e310a883.css",
-    "static/js/main.01436632.js"
+    "static/css/main.ff3d69b6.css",
+    "static/js/main.2a8e5239.js"
   ]
 }
