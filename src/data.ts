@@ -335,7 +335,7 @@ React UI에서 버튼 클릭만으로 **프록시 패턴** 기반의 업그레�
 
   {
     id: "sepolia-staking-service",
-    title: "",
+    title: "유저페이지와 관리자페이지 스테이킹 서비스",
     content: `
   
   `,

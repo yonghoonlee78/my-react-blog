@@ -1667,7 +1667,7 @@ const StakingDashboard: React.FC = () => {
             bottom: '20px',
             right: '20px',
             padding: '15px',
-            background: '#ff5722',
+            background: '#808080',
             color: 'white',
             border: 'none',
             borderRadius: '50%',
