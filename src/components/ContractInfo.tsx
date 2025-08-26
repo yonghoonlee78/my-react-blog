@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { JsonRpcProvider } from "ethers";
-import SimpleArtifact from "../abi/SimpleContract.json";
+const SimpleArtifact = require("../abi/SimpleContract.json");
 
 const CONTRACT_ADDRESS = "0x491d87D97969caD34136243EA5e022B0f1d0357B";
 const provider = new JsonRpcProvider("https://public-en-kairos.node.kaia.io");

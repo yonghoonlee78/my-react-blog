@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-
-
 import Layout from './components/Layout';
 import PostList from './components/PostList';
 import PostDetail from './components/PostDetail';
@@ -22,9 +20,11 @@ import WalletDashboard from './components/WalletDashboard';
 import NFTEventListener from './components/NFTEventListener';
 import Web3Profile from './components/Web3Profile';
 import MiniMiner from './components/MiniMiner';
+import StakingDashboard from './components/StakingDashboard';
+
+import AssetDashboard from './components/AssetDashboard';
 
 console.log("ALCHEMY_ENV_KEY:", process.env.REACT_APP_ALCHEMY_API_KEY);
-
 
 
 
@@ -54,8 +54,8 @@ const App: React.FC = () => {
           <Route path="/contract-info" element={<ContractInfo />} />
           <Route path="/wallet-dashboard" element={<WalletDashboard />} />
 
-
           <Route path="/web3-profile" element={<Web3Profile />} />
+          <Route path="/staking" element={<StakingDashboard />} />
 
           {/* ⭐️ MiniMiner 단독 실습 페이지 ROUTE 추가 */}
           <Route
@@ -69,6 +69,8 @@ const App: React.FC = () => {
           />
 
           {/* 404 Not Found */}
+          <Route path="/erc1155-all-assets-dashboard" element={<AssetDashboard />} />
+
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Layout>
