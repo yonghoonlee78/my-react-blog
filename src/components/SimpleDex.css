@@ -1,0 +1,286 @@
+.simple-dex-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dex-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .dex-header h2 {
+    color: white;
+    font-size: 2rem;
+    margin: 0;
+    margin-left: auto;  /* 오른쪽으로 이동 */
+  margin-right: 6rem;  /* 오른쪽 여백 */
+  }
+  
+  .connect-button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    width: auto;
+  }
+  
+  .connect-button:hover {
+    transform: scale(1.05);
+  }
+  
+  .account-info {
+    color: white;
+    font-family: monospace;
+  }
+  
+  .admin-badge {
+    background: gold;
+    color: black;
+    padding: 0.25rem 0.5rem;
+    border-radius: 5px;
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .message-box {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    text-align: center;  /* 메시지 가운데 정렬 추가 */
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  
+  .tab-navigation {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .tab-button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .tab-button.active {
+    background: white;
+    color: #764ba2;
+  }
+  
+  .tab-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .dex-content {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+  }
+
+  .tab-content {
+    max-width: 600px;  /* 컨테이너 최대 너비 */
+    margin: 0 auto;     /* 가운데 정렬 */
+    padding: 0 20px;    /* 좌우 패딩 */
+  }
+  
+
+  .tab-content h3 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: center;  /* 제목 가운데 정렬 */
+  }
+  
+  
+  .input-select,
+  .input-field {
+    width: 100%;
+    max-width: 350px;
+    padding: 0.75rem;
+    margin: 0 auto 1rem auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    display: block;
+    box-sizing: border-box;  /* 패딩과 보더를 너비에 포함 */
+  }
+
+  .input-field:focus {
+    outline: none;
+    border: 2px solid #667eea;  /* 포커스 시 보더 색상 변경 */
+    padding: calc(0.75rem - 1px);  /* 보더 두께 증가분만큼 패딩 감소 */
+  }
+  
+  
+  .action-button {
+    width: 100%;
+    max-width: 350px;    /* 버튼도 동일한 너비 */
+    margin: 1.5rem auto 0 auto;  /* 위 마진 추가, 가운데 정렬 */
+    display: block;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: opacity 0.3s;
+  }
+  
+  .action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .swap-arrow {
+    text-align: center;
+    font-size: 2rem;
+    color: #667eea;
+    margin: 1rem 0;
+  }
+  
+  .swap-section label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #666;
+    font-weight: 600;
+  }
+  
+  .output-amount {
+    background: #f0f0f0;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 600;
+  }
+  
+  .balances-section {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 1.5rem;
+    border-radius: 15px;
+  }
+  
+  .balances-section h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    text-align: center;  /* 제목 가운데 정렬 */
+    font-size: 1.5rem;
+  }
+
+
+  .balance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;  /* 제목과 그리드 사이 간격 */
+  }
+  
+  .balance-item {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .token-symbol {
+    display: block;
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .token-balance {
+    display: block;
+    color: #333;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  /* Admin Panel 스타일 추가 */
+.admin-section {
+    text-align: center;
+  }
+  
+  .admin-section h4 {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  
+  .fees-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .fee-item {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;    /* 세로 배치로 변경 */
+    align-items: center;
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto;
+    gap: 1rem;               /* 요소 간 간격 */
+  }
+  
+  .fee-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.0rem;            /* 토큰 정보 간격 줄임 */
+  }
+  
+  .fee-symbol {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #333;
+  }
+  
+  .fee-amount {
+    color: #666;
+    font-size: 0.9rem;
+  }
+  
+  .withdraw-fee-button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;   /* 패딩 조정 */
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    width: 80%;             /* 버튼 너비 조정 */
+  }
+  
+  
+  .withdraw-fee-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }

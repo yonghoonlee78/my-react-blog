@@ -1071,8 +1071,8 @@ const StakingDashboard: React.FC = () => {
                   color: '#856404'
                 }}>
                   <strong>수수료 안내</strong><br/>
-                  • 일반 인출 수수료: {Number(withdrawFeeRate) / 100}% ({calculateFee(unstakeInput).toFixed(4)} STK)<br/>
-                  • 조기 인출 수수료 (3일 이내): {Number(earlyWithdrawFee) / 100}%<br/>
+                  • 언스테이킹 수수료: {Number(withdrawFeeRate) / 100}% ({calculateFee(unstakeInput).toFixed(4)} STK)<br/>
+                  • Early 언스테이킹 수수료 (3일 이내): {Number(earlyWithdrawFee) / 100}%<br/>
                   • 실제 수령액: 수수료 차감 후 지급
                 </div>
               )}
@@ -1430,7 +1430,7 @@ const StakingDashboard: React.FC = () => {
               
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#666' }}>
-                  일반 인출 수수료 (현재: {Number(withdrawFeeRate) / 100}%)
+                  언스테이킹 수수료 (현재: {Number(withdrawFeeRate) / 100}%)
                 </label>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center' }}>
                   <input
@@ -1471,7 +1471,7 @@ const StakingDashboard: React.FC = () => {
 
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#666' }}>
-                  조기 인출 수수료 (현재: {Number(earlyWithdrawFee) / 100}%)
+                 Early 언스테이킹 수수료 (현재: {Number(earlyWithdrawFee) / 100}%)
                 </label>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center' }}>
                   <input

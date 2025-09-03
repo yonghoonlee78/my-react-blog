@@ -365,4 +365,27 @@ React UI에서 버튼 클릭만으로 **프록시 패턴** 기반의 업그레�
   route: '/post/mini-pow-miner-demo',
   category: '블록체인',
   },
+
+
+  {
+    id: "simple-dex-sepolia",
+    title: "Sepolia 테스트넷 DEX: AMM 기반 토큰 스왑 & 유동성 풀",
+    content: `
+
+  실제 작동하는 AMM(Automated Market Maker) 기반 탈중앙화 거래소입니다.
+  
+  ### 🚀 주요 기능
+  - **Router, Factory 컨트렉트 생성**
+  - **USDT,USDC,DAI,WETH 토큰 생성**
+  - **토큰 스왑**: x*y=k 공식 기반 자동화된 토큰 교환
+  - **유동성 제공**: LP 토큰 발행 및 수수료 수익
+  - **입출금**: ERC20 토큰 관리
+  - **관리자 기능**: 수수료 출금 (Owner 전용)
+  `,
+    date: "2025-09-02",
+    tags: ["DEX", "AMM", "Sepolia", "스왑", "유동성풀", "DeFi"],
+    category: "DeFi",
+    route: "/simple-dex",
+    type: "feature"
+  },
 ];

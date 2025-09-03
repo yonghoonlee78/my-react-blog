@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
 import { initialPosts } from "../data";
+import { getPostById } from "../utils/blogApi";
+import { Post } from "../types/Post";
 
-// 컴포넌트 import
+// 컴포넌트 import들 - 기존과 동일
 import ContractInfo from "../components/ContractInfo";
 import KaiaWallet from "../pages/KaiaWallet";
 import KaiaMnemonicWallet from "../pages/MnemonicWallet";
@@ -21,8 +23,7 @@ import ERC1155Page from "./erc1155-start/ERC1155Page";
 import MiniMiner from "./MiniMiner";
 import ERC2612_2771Demo from "../components/ERC2612_2771Demo";
 import StakingDashboard from "../components/StakingDashboard";
-
-
+import SimpleDEX from "../components/SimpleDEX";
 
 import "../components/PostDetail.css";
 
@@ -30,22 +31,77 @@ const userAddress = "0xf3a9d84E06363a251bE733E8F2bFCa1849b3c512";
 
 const PostDetail: React.FC = () => {
   const { id } = useParams();
-  const post = initialPosts.find((p) => p.id === id);
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!post) {
+  useEffect(() => {
+    const fetchPost = async () => {
+      if (!id) {
+        setError('Post ID가 없습니다.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        
+        // 1. 먼저 Supabase에서 찾기 시도
+        const supabasePost = await getPostById(id);
+        
+        if (supabasePost) {
+          setPost(supabasePost);
+        } else {
+          // 2. Supabase에서 못 찾으면 기존 initialPosts에서 찾기 (Web3 컴포넌트용)
+          const localPost = initialPosts.find((p) => p.id === id);
+          if (localPost) {
+            setPost(localPost);
+          } else {
+            setError('게시물을 찾을 수 없습니다.');
+          }
+        }
+      } catch (err) {
+        console.error('포스트 로딩 실패:', err);
+        // 에러 발생시에도 로컬 데이터에서 찾기 시도
+        const localPost = initialPosts.find((p) => p.id === id);
+        if (localPost) {
+          setPost(localPost);
+        } else {
+          setError('게시물을 불러오는데 실패했습니다.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPost();
+  }, [id]);
+
+  // 로딩 상태
+  if (loading) {
     return (
       <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
-        <h1>❌ 글을 찾을 수 없습니다.</h1>
+        <p>게시물을 불러오는 중...</p>
+      </main>
+    );
+  }
+
+  // 에러 또는 포스트 없음
+  if (error || !post) {
+    return (
+      <main style={{ padding: "2rem", maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+        <h1>게시물을 찾을 수 없습니다.</h1>
+        <p>{error}</p>
         <Link to="/" className="back-button">← 목록으로 돌아가기</Link>
       </main>
     );
   }
 
-  // 각 게시물 타입/ID별 상세 UI 렌더링
+  // 기존 Web3 컴포넌트별 분기 처리 - 그대로 유지
   if (post.type === "contract-info") {
     return (
       <main style={{ padding: "2rem" }}>
-        <h1>🚀 스마트 컨트랙트 배포 정보</h1>
+        <h1>스마트 컨트랙트 배포 정보</h1>
         <ContractInfo />
         <Link to="/" className="back-button">목록으로 돌아가기</Link>
       </main>
@@ -181,7 +237,6 @@ const PostDetail: React.FC = () => {
     );
   }
 
-
   if (post.id === "mini-pow-miner-demo") {
     return (
       <main className="post-container">
@@ -197,7 +252,7 @@ const PostDetail: React.FC = () => {
 
   if (post.id === "erc2612-2771-unified-demo") {
     return (
-      <main style={{ padding: 0 }}> {/* padding 제거 */}
+      <main style={{ padding: 0 }}>
         <ERC2612_2771Demo />
         <div style={{ padding: '2rem', textAlign: 'center' }}>
           <Link to="/" className="back-button">목록으로 돌아가기</Link>
@@ -219,11 +274,29 @@ const PostDetail: React.FC = () => {
     );
   }
 
+  if (post.id === "simple-dex-sepolia") {
+    return (
+      <main className="post-container">
+        <h1>{post.title}</h1>
+        <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+          {post.content}
+        </ReactMarkdown>
+        <SimpleDEX />
+        <Link to="/" className="back-button">목록으로 돌아가기</Link>
+      </main>
+    );
+  }
 
-  // 기본 마크다운 렌더링
+  // 기본 마크다운 렌더링 (새로운 Supabase 포스트들이 여기에 해당)
   return (
     <main className="post-container">
       <h1>{post.title}</h1>
+      <p className="post-meta">{post.date} | {post.category}</p>
+      <div className="post-tags">
+        {post.tags?.map(tag => (
+          <span key={tag} className="tag">#{tag}</span>
+        ))}
+      </div>
       <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
         {post.content}
       </ReactMarkdown>

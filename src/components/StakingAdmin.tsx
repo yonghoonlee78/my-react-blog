@@ -367,7 +367,7 @@ const StakingAdmin: React.FC = () => {
             <h3>💸 수수료 관리</h3>
             
             <div style={{ marginBottom: '15px' }}>
-              <label>일반 인출 수수료: {Number(withdrawFee) / 100}%</label>
+              <label> 언스테이킹 수수료: {Number(withdrawFee) / 100}%</label>
               <div style={styles.inputGroup}>
                 <input
                   type="number"
@@ -387,7 +387,7 @@ const StakingAdmin: React.FC = () => {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-              <label>조기 인출 수수료 (3일 이내): {Number(earlyWithdrawFee) / 100}%</label>
+              <label>Early 언스테이킹 수수료 (3일 이내): {Number(earlyWithdrawFee) / 100}%</label>
               <div style={styles.inputGroup}>
                 <input
                   type="number"

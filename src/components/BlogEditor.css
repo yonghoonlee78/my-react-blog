@@ -1,0 +1,272 @@
+/* BlogEditor.css */
+.editor-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: #2c3e50;
+    color: white;
+  }
+  
+  .editor-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+  
+  .btn-close {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .btn-close:hover {
+    background: white;
+    color: #2c3e50;
+  }
+  
+  .editor-form {
+    padding: 2rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #ecf0f1;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+  
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: #3498db;
+  }
+  
+  .category-input {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .category-input select {
+    flex: 1;
+  }
+  
+  .category-input .or {
+    color: #7f8c8d;
+    font-weight: 500;
+  }
+  
+  .category-input input {
+    flex: 1;
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  
+  .tag-input-section {
+    border: 2px solid #ecf0f1;
+    border-radius: 6px;
+    padding: 1rem;
+    background: #f8f9fa;
+  }
+  
+  .tag-input {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .tag-input input {
+    flex: 1;
+    margin-bottom: 0;
+  }
+  
+  .tag-input button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .tag-input button:hover {
+    background: #2980b9;
+  }
+  
+  .existing-tags p {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: #7f8c8d;
+  }
+  
+  .tag-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .tag-btn {
+    background: #ecf0f1;
+    color: #2c3e50;
+    border: 2px solid transparent;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  
+  .tag-btn:hover {
+    background: #bdc3c7;
+  }
+  
+  .tag-btn.selected {
+    background: #3498db;
+    color: white;
+    border-color: #2980b9;
+  }
+  
+  .selected-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .tag-item {
+    background: #3498db;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .tag-item button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .tag-item button:hover {
+    background: rgba(255,255,255,0.2);
+  }
+  
+  .help-text {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 2px solid #ecf0f1;
+  }
+  
+  .btn-cancel {
+    background: #95a5a6;
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  
+  .btn-cancel:hover {
+    background: #7f8c8d;
+  }
+  
+  .btn-submit {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  
+  .btn-submit:hover {
+    background: #229954;
+  }
+  
+  .btn-submit:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+  }
+  
+  @media (max-width: 768px) {
+    .editor-container {
+      margin: 1rem;
+    }
+    
+    .editor-form {
+      padding: 1rem;
+    }
+    
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+    
+    .category-input {
+      flex-direction: column;
+    }
+    
+    .form-actions {
+      flex-direction: column;
+    }
+    
+    .tag-input {
+      flex-direction: column;
+    }
+  }
