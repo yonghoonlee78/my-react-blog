@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { JsonRpcProvider } from "ethers";
-import SimpleArtifact from "../artifacts/contracts/SimpleContract.sol/SimpleContract.json";
+//import SimpleArtifact from "../artifacts/contracts/SimpleContract.sol/SimpleContract.json";
+const SimpleArtifact = require("../abi/SimpleContract.json");
 
 const provider = new JsonRpcProvider(
   `https://eth-sepolia.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`
