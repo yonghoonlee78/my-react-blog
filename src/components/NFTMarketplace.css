@@ -1,0 +1,1522 @@
+/* ================================================
+   NFT 마켓플레이스 통합 스타일시트 - Part 1/4
+   ================================================ */
+
+/* 기본 마켓플레이스 레이아웃 */
+.nft-marketplace {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.marketplace-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  color: white;
+  position: relative;
+}
+
+.marketplace-header h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin: 20px 0 20px 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  width: 100%;
+}
+
+.wallet-info {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.account-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.account-badge {
+  background: rgba(255,255,255,0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+.btn-connect, .btn-refresh {
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-connect:hover, .btn-refresh:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* 메인 탭 네비게이션 */
+.main-tab-navigation {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 20px;
+  background: #1f2937;
+  padding: 5px;
+  border-radius: 12px;
+}
+
+.main-tab-navigation button {
+  flex: 1;
+  background: transparent;
+  color: #9ca3af;
+  border: none;
+  padding: 15px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.main-tab-navigation button.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.main-tab-navigation button:hover:not(.active) {
+  background: rgba(102, 126, 234, 0.1);
+  color: white;
+}
+
+/* 탭 네비게이션 */
+.tab-navigation {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-navigation button {
+  background: none;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tab-navigation button.active {
+  color: #667eea;
+}
+
+.tab-navigation button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #667eea;
+}
+
+/* NFT 그리드 */
+.nft-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.nft-card {
+  background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
+  border-radius: 15px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.nft-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(79, 209, 197, 0.05) 0%, transparent 50%);
+  z-index: 1;
+}
+
+.nft-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+.nft-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 
+    0 10px 30px rgba(102, 126, 234, 0.4),
+    0 0 60px rgba(102, 126, 234, 0.1);
+  background: linear-gradient(135deg, #1e2330 0%, #323a4f 100%);
+}
+
+.nft-card:hover::before {
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(79, 209, 197, 0.1) 0%, transparent 50%);
+}
+
+.nft-image {
+  width: 100%;
+  height: 450px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f5f3f0 0%, #e8e5e1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nft-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  transition: transform 0.3s ease;
+}
+
+.nft-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    linear-gradient(to bottom, transparent 70%, rgba(31, 41, 55, 0.5) 100%);
+  pointer-events: none;
+}
+
+.auction-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  z-index: 1;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.nft-info {
+  padding: 20px;
+}
+
+.nft-info h3 {
+  color: #f3f4f6;
+  font-size: 1.4rem;
+  margin: 0 0 10px 0;
+}
+
+.description {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.nft-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #374151;
+}
+
+.token-id, .seller {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+/* ================================================
+   NFT 마켓플레이스 통합 스타일시트 - Part 2/4
+   구매/경매 섹션 및 하이브리드 섹션
+   ================================================ */
+
+/* 구매 섹션 */
+.buy-section, .auction-section {
+  margin-top: 20px;
+}
+
+.price-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.price-info span:first-child {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.price {
+  color: #10b981;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.btn-buy, .btn-bid {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-buy:hover, .btn-bid:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102,126,234,0.5);
+}
+
+.btn-buy:active, .btn-bid:active {
+  transform: translateY(0);
+}
+
+/* 경매 섹션 */
+.highest-bid {
+  background: #374151;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  color: #fbbf24;
+  text-align: center;
+  font-weight: 600;
+}
+
+.bid-input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.bid-input-group input {
+  flex: 1;
+  background: #374151;
+  border: 1px solid #4b5563;
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.bid-input-group input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.2);
+}
+
+.bid-input-group .btn-bid {
+  width: auto;
+  padding: 10px 25px;
+}
+
+.auction-time {
+  color: #ef4444;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* 하이브리드 섹션 - 즉시구매와 경매를 모두 지원 */
+.hybrid-section {
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin-top: 15px;
+}
+
+.hybrid-section .price-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hybrid-section .price-info:last-of-type {
+  border-bottom: none;
+  margin-bottom: 15px;
+}
+
+.hybrid-section .price-info span:first-child {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.hybrid-section .price-info .price {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.hybrid-section .highest-bid {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.action-buttons .btn-buy {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.action-buttons .btn-buy:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+}
+
+.bid-section {
+  display: flex;
+  gap: 6px;
+}
+
+.bid-section input {
+  flex: 2.5;
+  background: #374151;
+  border: 1px solid #4b5563;
+  color: white;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  min-width: 0;
+}
+
+.bid-section input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.bid-section input::placeholder {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.bid-section .btn-bid-small {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 4px !important;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 40px;
+  max-width: 60px;
+  font-size: 0.85rem;
+}
+
+.bid-section .btn-bid-small:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.hybrid-section .auction-time {
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  padding: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  margin-top: 10px;
+  animation: pulse 2s infinite;
+}
+
+.hybrid-section .auction-time.ended {
+  color: #6b7280;
+  background: rgba(107, 114, 128, 0.1);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+  animation: none;
+}
+
+/* 로딩 상태 */
+.loading {
+  text-align: center;
+  padding: 50px;
+  color: #9ca3af;
+  font-size: 1.2rem;
+}
+
+/* ================================================
+   NFT 마켓플레이스 통합 스타일시트 - Part 3/4
+   모달 및 관리자 섹션
+   ================================================ */
+
+/* ================================================
+   모달 스타일
+   ================================================ */
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Content */
+.modal-content {
+  background: #1f2937;
+  border-radius: 20px;
+  width: auto;
+  min-width: 500px;
+  max-width: 700px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(100px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 1.8rem;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+}
+
+.modal-close:hover {
+  background: rgba(255, 67, 54, 0.8);
+  transform: rotate(180deg);
+  border-color: rgba(255, 67, 54, 1);
+}
+
+.modal-header {
+  padding: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px 20px 0 0;
+  text-align: center;
+  position: relative;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.modal-body {
+  padding: 30px;
+  text-align: center;
+}
+
+.modal-image {
+  width: 100%;
+  height: auto;
+  margin-bottom: 20px;
+  border-radius: 15px;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.modal-image img {
+  width: 100%;
+  height: auto;
+  object-fit: fill;
+  display: block;
+}
+
+.modal-details {
+  color: white;
+}
+
+.detail-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.detail-section h3 {
+  color: #667eea;
+  margin: 0 0 15px 0;
+  font-size: 1.2rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 5px;
+}
+
+.info-item .label {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.info-item .value {
+  color: #f3f4f6;
+  font-weight: 600;
+}
+
+.attributes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.attribute-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.attr-type {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+}
+
+.attr-value {
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.clickable-address {
+  cursor: pointer;
+  color: #667eea !important;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.clickable-address:hover {
+  color: #764ba2 !important;
+  text-decoration: underline;
+}
+
+.owner-badge {
+  background: #10b981;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 10px;
+}
+
+.modal-details .hybrid-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.modal-details .hybrid-info .buy-price,
+.modal-details .hybrid-info .bid-price {
+  text-align: center;
+  flex: 1;
+}
+
+.modal-details .hybrid-info .buy-price h4,
+.modal-details .hybrid-info .bid-price h4 {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  margin: 0 0 5px 0;
+}
+
+.modal-details .hybrid-info .buy-price span,
+.modal-details .hybrid-info .bid-price span {
+  color: #10b981;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* ================================================
+   관리자 섹션 - 다크 테마 스타일
+   ================================================ */
+
+.admin-section {
+  background: #0f1419;
+  border-radius: 16px;
+  padding: 0;
+  min-height: 600px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid #1e2532;
+}
+
+/* Admin Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 0;
+  background: #1a1f2e;
+  padding: 16px 20px 0 20px;
+  border-bottom: 1px solid #2d3748;
+}
+
+.admin-tabs button {
+  flex: 1;
+  background: transparent;
+  color: #64748b;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.95rem;
+  text-transform: none;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.admin-tabs button.active {
+  background: #0f1419;
+  color: #ffffff;
+  font-weight: 600;
+  border-bottom: 2px solid #3b82f6;
+}
+
+.admin-tabs button:hover:not(.active) {
+  color: #94a3b8;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* Admin Content */
+.admin-content {
+  padding: 20px;
+  background: #0f1419;
+  min-height: 500px;
+}
+
+/* ================================================
+   NFT 마켓플레이스 통합 스타일시트 - Part 4/4
+   관리자 섹션 상세 스타일 및 반응형 디자인
+   ================================================ */
+
+/* Overview Section - 다크 테마 스타일 */
+.overview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  background: linear-gradient(135deg, #1a1d29 0%, #2d1b69 50%, #1a1d29 100%);
+  padding: 32px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  margin: -20px -20px 20px -20px;
+}
+
+.overview-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+  z-index: 0;
+}
+
+.overview-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-bottom: 0;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  min-height: 140px;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--card-gradient);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: var(--card-color);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.stat-card:hover::before {
+  opacity: 0.1;
+}
+
+.stat-card h3 {
+  color: #ffffff !important;
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* 카드별 색상 및 그라디언트 */
+.stat-card:nth-child(1) { 
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%) !important;
+}
+
+.stat-card:nth-child(2) { 
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%) !important;
+}
+
+.stat-card:nth-child(3) { 
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+  border: 1px solid #ec4899;
+  z-index: 2;
+}
+
+.stat-card:nth-child(4) { 
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%) !important;
+}
+
+.stat-card:nth-child(3) h3 {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.stat-card:nth-child(3) .stat-value {
+  color: #ffffff;
+}
+
+/* Withdrawal Section */
+.withdrawal-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.withdrawal-card {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 12px;
+  padding: 28px 32px;
+  text-align: center;
+  min-width: 300px;
+  max-width: 340px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.withdrawal-card h3 {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 8px 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  text-transform: none;
+}
+
+.withdrawal-amount {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.btn-withdraw {
+  background: white;
+  color: #059669;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-transform: none;
+}
+
+.btn-withdraw:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-withdraw:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Listings Section */
+.listings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Create Listing Form - 수정된 부분 */
+.create-listing-form {
+  background: #1e2532;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 0 auto 20px auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  max-width: 800px;
+}
+
+.create-listing-form h3 {
+  color: #ffffff;
+  margin: 0 0 20px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: none;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+  max-width: 100%;
+  align-items: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  color: #cbd5e1;
+  margin-bottom: 4px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-transform: none;
+  display: block;
+}
+
+.form-group input,
+.form-group select {
+  background: #0f1419;
+  border: 1px solid #374151;
+  color: #ffffff;
+  padding: 12px 14px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  width: 100%;
+  box-sizing: border-box;
+  height: 44px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-create-listing {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  display: block;
+  text-transform: none;
+}
+
+.btn-create-listing:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Listings Table */
+.listings-table {
+  background: #1e2532;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 24px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.listings-table h3 {
+  color: #ffffff;
+  margin: 0 0 20px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: none;
+}
+
+.listings-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.listings-table th,
+.listings-table td {
+  padding: 12px 16px;
+  text-align: center;
+  border-bottom: 1px solid #374151;
+}
+
+.listings-table th {
+  color: #94a3b8;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-transform: none;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.listings-table td {
+  color: #ffffff;
+  font-size: 0.875rem;
+}
+
+.listings-table tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.type-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.type-badge.auction {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.type-badge.fixed {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.btn-cancel {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: none;
+}
+
+.btn-cancel:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Settings Section */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-card {
+  background: #1e2532;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.settings-card h3 {
+  color: #ffffff;
+  margin: 0 0 16px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: none;
+}
+
+.contract-info {
+  background: #0f1419;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #374151;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row span:first-child {
+  color: #94a3b8;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-transform: none;
+}
+
+.contract-address {
+  color: #3b82f6;
+  cursor: pointer;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.contract-address:hover {
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+/* ================================================
+   반응형 디자인
+   ================================================ */
+
+@media (max-width: 768px) {
+  .marketplace-header {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .marketplace-header h1 {
+    font-size: 2rem;
+  }
+  
+  .wallet-info {
+    position: static;
+    margin-top: 20px;
+  }
+  
+  .nft-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .tab-navigation, .main-tab-navigation {
+    justify-content: space-around;
+  }
+  
+  .tab-navigation button, .main-tab-navigation button {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+  }
+
+  .modal-content {
+    min-width: 95%;
+    margin: 10px;
+  }
+
+  .bid-section {
+    gap: 4px;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .bid-section input {
+    flex: 3;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .bid-section .btn-bid-small {
+    padding: 8px 6px;
+    font-size: 0.8rem;
+    min-width: 45px;
+    max-width: 60px;
+  }
+  
+  .hybrid-section .price-info {
+    font-size: 0.9rem;
+  }
+  
+  .hybrid-section .price-info .price {
+    font-size: 1rem;
+  }
+
+  .admin-content {
+    padding: 16px;
+  }
+  
+  .admin-tabs {
+    flex-direction: column;
+    padding: 16px;
+  }
+  
+  .admin-tabs button {
+    margin-right: 0;
+    margin-bottom: 4px;
+    border-radius: 8px;
+  }
+  
+  .admin-tabs button:last-child {
+    margin-bottom: 0;
+  }
+  
+  .overview-section {
+    margin: -16px -16px 16px -16px;
+    padding: 24px 16px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .stat-card {
+    padding: 20px;
+  }
+  
+  .withdrawal-card {
+    min-width: auto;
+    width: 100%;
+    padding: 20px 16px;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    max-width: 100%;
+  }
+  
+  .btn-create-listing {
+    max-width: 100%;
+  }
+  
+  .create-listing-form {
+    max-width: 100%;
+    margin: 0 0 20px 0;
+  }
+  
+  .listings-table {
+    padding: 16px;
+    overflow-x: auto;
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  .listings-table table {
+    min-width: 600px;
+  }
+}
+
+
+  /* ================================================
+   수수료 관리 섹션 - 핑크 카드 스타일
+   ================================================ */
+
+.fees-section {
+  padding: 20px 0;
+}
+
+.fees-section h3 {
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.fee-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 80px;
+}
+
+.fee-item {
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.fee-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(236, 72, 153, 0.3);
+}
+
+.fee-item label {
+  color: white !important;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.fee-item input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  width: 80px;
+  padding: 8px;
+  border-radius: 6px;
+  margin: 0 8px;
+}
+
+.fee-item input:focus {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  outline: none;
+}
+
+.fee-item button {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+.fee-item button:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+/* 진행바 스타일 */
+.auction-progress {
+  height: 4px;
+  background: #374151;
+  border-radius: 2px;
+  margin: 10px 0 8px 0;
+  overflow: hidden;
+}
+
+.auction-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #f59e0b);
+  border-radius: 2px;
+  width: 25%;
+}
+
+.auction-status {
+  border-right: none !important;
+}
+
+.auction-active {
+  color: #ef4444 !important;
+  font-weight: 600;
+}
+
+
+/* 입찰 취소 버튼 스타일 수정 */
+.btn-bid-cancel {
+  background: #ef4444 !important;
+  color: white !important;
+  border: none !important;
+  padding: 8px 10px !important;
+  border-radius: 4px !important;
+  font-size: 14px !important;
+  width: 50px !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  text-align: center !important;
+}
+
+.btn-bid-cancel:hover {
+  background: #dc2626 !important;
+}
+
+.highest-bidder-badge {
+  background: #6b7280 !important;
+  color: white !important;
+  padding: 8px 10px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  width: 50px !important;
+  text-align: center !important;
+  display: inline-block !important;
+  flex-shrink: 0 !important;
+}
+
+
+
+@media (max-width: 480px) {
+  .bid-section input {
+    flex: 4;
+  }
+  
+  .bid-section .btn-bid-small {
+    max-width: 50px;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+  }
+  
+  .withdrawal-amount {
+    font-size: 1.5rem;
+  }
+}

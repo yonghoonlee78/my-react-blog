@@ -25,6 +25,11 @@ import StakingDashboard from './components/StakingDashboard';
 
 import AssetDashboard from './components/AssetDashboard';
 import SimpleDEX from './components/SimpleDEX';
+import NFTMarketplace from './components/NFTMarketplace';
+import VolatilityPrediction from './components/VolatilityPrediction';
+
+// Routes 안에 추가
+<Route path="/volatility-prediction" element={<VolatilityPrediction />} />
 
 console.log("ALCHEMY_ENV_KEY:", process.env.REACT_APP_ALCHEMY_API_KEY);
 
@@ -59,6 +64,8 @@ const App: React.FC = () => {
           <Route path="/web3-profile" element={<Web3Profile />} />
           <Route path="/staking" element={<StakingDashboard />} />
           <Route path="/simple-dex" element={<SimpleDEX />} />
+          <Route path="/nft-marketplace" element={<NFTMarketplace />} />
+          <Route path="/volatility-prediction" element={<VolatilityPrediction />} />
           
           {/* MiniMiner 단독 실습 페이지 ROUTE */}
           <Route
@@ -73,6 +80,10 @@ const App: React.FC = () => {
           
           {/* 기타 라우트들 */}
           <Route path="/erc1155-all-assets-dashboard" element={<AssetDashboard />} />
+           {/* 비트코인 변동성 예측 게임 라우트 추가 */}
+           <Route path="/volatility-prediction" element={<VolatilityPrediction />} />
+
+
           
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

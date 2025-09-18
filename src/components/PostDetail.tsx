@@ -24,6 +24,9 @@ import MiniMiner from "./MiniMiner";
 import ERC2612_2771Demo from "../components/ERC2612_2771Demo";
 import StakingDashboard from "../components/StakingDashboard";
 import SimpleDEX from "../components/SimpleDEX";
+import NFTMarketplace from "../components/NFTMarketplace";
+import VolatilityPrediction from "../components/VolatilityPrediction";
+
 
 import "../components/PostDetail.css";
 
@@ -282,6 +285,32 @@ const PostDetail: React.FC = () => {
           {post.content}
         </ReactMarkdown>
         <SimpleDEX />
+        <Link to="/" className="back-button">목록으로 돌아가기</Link>
+      </main>
+    );
+  }
+
+  if (post.id === "nft-marketplace-dragons") {
+    return (
+      <main className="post-container">
+        <h1>{post.title}</h1>
+        <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+          {post.content}
+        </ReactMarkdown>
+        <NFTMarketplace />
+        <Link to="/" className="back-button">목록으로 돌아가기</Link>
+      </main>
+    );
+  }
+
+  if (post.id === "bitcoin-volatility-prediction") {
+    return (
+      <main className="post-container">
+        <h1>{post.title}</h1>
+        <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+          {post.content}
+        </ReactMarkdown>
+        <VolatilityPrediction />
         <Link to="/" className="back-button">목록으로 돌아가기</Link>
       </main>
     );

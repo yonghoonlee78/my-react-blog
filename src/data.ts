@@ -367,6 +367,9 @@ React UI에서 버튼 클릭만으로 **프록시 패턴** 기반의 업그레�
   },
 
 
+
+
+
   {
     id: "simple-dex-sepolia",
     title: "Sepolia 테스트넷 DEX: AMM 기반 토큰 스왑 & 유동성 풀",
@@ -388,4 +391,30 @@ React UI에서 버튼 클릭만으로 **프록시 패턴** 기반의 업그레�
     route: "/simple-dex",
     type: "feature"
   },
+
+  {
+    id: "nft-marketplace-dragons",
+    title: "Simple NFT 마켓플레이스",
+    content: `
+    
+    `,
+    date: "2025-09-03",
+    tags: ["NFT", "Marketplace", "Sepolia", "Dragon", "경매", "거래"],
+    category: "블록체인",
+    route: "/nft-marketplace",
+    type: "feature"
+  },
+
+  {
+    id: "bitcoin-volatility-prediction",
+    title: "Bitcoin Price Prediction Game",
+    content: `
+
+  `,
+    date: "2025-09-09",
+    tags: ["비트코인", "변동성", "예측", "게임", "Web3Auth", "포인트"],
+    category: "게임",
+    route: "/volatility-prediction",
+    type: "feature"
+  }
 ];
