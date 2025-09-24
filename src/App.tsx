@@ -6,7 +6,7 @@ import PostDetail from './components/PostDetail';
 import AboutPage from './components/AboutPage';
 import NotFoundPage from './components/NotFoundPage';
 import ContractExplorer from './components/ContractExplorer';
-import AdminPage from './components/AdminPage'; // 새로 추가
+import AdminPage from './components/AdminPage';
 
 import Home from './pages/Home';
 import BlockDetail from './pages/BlockDetail';
@@ -15,7 +15,7 @@ import KaiaWallet from './pages/KaiaWallet';
 import MnemonicWallet from './pages/MnemonicWallet';
 import ContractInfo from './components/ContractInfo';
 
-import { initialPosts } from './data'; // 기존 Web3 기능 유지를 위해 보존
+import { initialPosts } from './data';
 import type { Post } from './types/Post';
 import WalletDashboard from './components/WalletDashboard';
 import NFTEventListener from './components/NFTEventListener';
@@ -28,25 +28,29 @@ import SimpleDEX from './components/SimpleDEX';
 import NFTMarketplace from './components/NFTMarketplace';
 import VolatilityPrediction from './components/VolatilityPrediction';
 
-// Routes 안에 추가
-<Route path="/volatility-prediction" element={<VolatilityPrediction />} />
-
 console.log("ALCHEMY_ENV_KEY:", process.env.REACT_APP_ALCHEMY_API_KEY);
 
 const App: React.FC = () => {
-  // 기존 Web3 기능들이 여전히 필요할 수 있으므로 유지
   const [allPosts, setPosts] = useState<Post[]>([]);
-  useEffect(() => setPosts(initialPosts), []);
+  
+  useEffect(() => {
+    setPosts(initialPosts);
+  }, []);
 
   return (
     <Router>
       <Layout>
         <Routes>
-          {/* 블로그 관련 라우트 */}
+          {/* 기본 라우트를 블로그 목록으로 변경 (Navigate 제거) */}
           <Route path="/" element={<PostList />} />
+          
+          {/* 블로그 관련 라우트 */}
           <Route path="/post/:id" element={<PostDetail />} />
-          <Route path="/admin" element={<AdminPage />} /> {/* 관리자 페이지 추가 */}
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="/about" element={<AboutPage />} />
+          
+          {/* 비트코인 변동성 예측 게임 - 별도 경로 */}
+          <Route path="/volatility-prediction" element={<VolatilityPrediction />} />
           
           {/* Web3 관련 라우트들 */}
           <Route path="/wallet" element={<KaiaWallet />} />
@@ -65,9 +69,8 @@ const App: React.FC = () => {
           <Route path="/staking" element={<StakingDashboard />} />
           <Route path="/simple-dex" element={<SimpleDEX />} />
           <Route path="/nft-marketplace" element={<NFTMarketplace />} />
-          <Route path="/volatility-prediction" element={<VolatilityPrediction />} />
           
-          {/* MiniMiner 단독 실습 페이지 ROUTE */}
+          {/* MiniMiner 단독 실습 페이지 */}
           <Route
             path="/mini-miner"
             element={
@@ -80,10 +83,6 @@ const App: React.FC = () => {
           
           {/* 기타 라우트들 */}
           <Route path="/erc1155-all-assets-dashboard" element={<AssetDashboard />} />
-           {/* 비트코인 변동성 예측 게임 라우트 추가 */}
-           <Route path="/volatility-prediction" element={<VolatilityPrediction />} />
-
-
           
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

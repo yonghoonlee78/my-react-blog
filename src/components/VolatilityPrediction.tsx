@@ -1,7 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { supabase } from '../utils/supabaseClient';
-import WalletLogin from './WalletLogin';
 import './VolatilityPrediction.css';
+import { ethers } from "ethers";
+
+// ERC20 토큰 ABI (잔액 조회 및 전송용)
+const ERC20_ABI = [
+  "function balanceOf(address) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function symbol() view returns (string)",
+  "function mint(address to, uint256 amount) external",
+  "function transfer(address to, uint256 amount) returns (bool)"
+];
 
 interface LeaderboardEntry {
   rank: number;
@@ -42,11 +51,17 @@ interface ExchangeBalance {
   change24h: number;
 }
 
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 const VolatilityPrediction: React.FC = () => {
   // 기본 상태
   const [user, setUser] = useState<any>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -64,10 +79,16 @@ const VolatilityPrediction: React.FC = () => {
   const [activeMenuTab, setActiveMenuTab] = useState('wallet');
   const [stakingAmount, setStakingAmount] = useState(0);
   const [stakingDays, setStakingDays] = useState(10);
-  const [usdtBalance, setUsdtBalance] = useState(0);
-  const [selectedNetwork, setSelectedNetwork] = useState('mumbai');
-  const [swapAmount, setSwapAmount] = useState(4000);
+  const [globalSwapAmount, setGlobalSwapAmount] = useState(100); // 수정: 전역 상태로 변경
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [bitUSDTBalance, setBitUSDTBalance] = useState(0);
+  
+  // 출금 모달 상태
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState<string>('');
+  const [withdrawAddress, setWithdrawAddress] = useState<string>('');
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [currentTokenBalance, setCurrentTokenBalance] = useState<string>('0');
   
   // 차트 탭 상태
   const [activeTab, setActiveTab] = useState('original');
@@ -94,13 +115,8 @@ const VolatilityPrediction: React.FC = () => {
   
   // Bear/Bull 실시간 비율
   const [bearBullRatio, setBearBullRatio] = useState({ bear: 50, bull: 50 });
-  
-  // 스프레드 설정
-  const getSpread = () => {
-    if (selectedTime === 60) return 0.1;
-    if (selectedTime === 180) return 0.2;
-    return 0.3;
-  };
+
+  const BITUSDT_ADDRESS = "0x29a895dcFCf23cfA660265983a03c0E9fCf665C5";
   
   // 추가 데이터
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -133,19 +149,62 @@ const VolatilityPrediction: React.FC = () => {
     change24h: -5097.31
   });
   
+  // Refs
   const ws = useRef<WebSocket | null>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+  const bearBullCacheRef = useRef<{ data: any; timestamp: number } | null>(null);
+  const stakingCheckRef = useRef<boolean>(false);
 
-  // 스테이킹 만기 체크 함수 추가
+  // 스프레드 설정
+  const getSpread = () => {
+    if (selectedTime === 60) return 0.1;
+    if (selectedTime === 180) return 0.2;
+    return 0.3;
+  };
+
+  // 무료 포인트 받기 함수
+  const claimFreePoints = async () => {
+    if (!user) {
+      alert('로그인이 필요합니다!');
+      return;
+    }
+
+    const lastClaim = localStorage.getItem(`lastFreeClaim_${user.email}`);
+    if (lastClaim) {
+      const lastClaimTime = new Date(lastClaim);
+      const now = new Date();
+      const hoursDiff = (now.getTime() - lastClaimTime.getTime()) / (1000 * 60 * 60);
+      
+      if (hoursDiff < 24) {
+        alert(`24시간마다 1번만 받을 수 있습니다. ${Math.ceil(24 - hoursDiff)}시간 후 다시 시도하세요.`);
+        return;
+      }
+    }
+
+    const newPoints = userPoints + 100;
+    
+    await supabase.from('users')
+      .update({ points: newPoints })
+      .eq('id', user.id);
+    
+    setUserPoints(newPoints);
+    localStorage.setItem(`lastFreeClaim_${user.email}`, new Date().toISOString());
+    alert('🎁 무료 100P를 받았습니다!');
+  };
+
+  // 스테이킹 만기 체크 함수 - 최적화
   const checkExpiredStaking = async () => {
-    if (!user) return;
+    if (!user || stakingCheckRef.current) return;
+    
+    stakingCheckRef.current = true;
     
     try {
-      // 만기된 스테이킹 조회
       const { data: expiredStaking, error } = await supabase
         .from('staking')
         .select('*')
-        .eq('user_id', user.wallet_address || user.email)
+        .eq('user_id', user.id)
         .eq('status', 'active')
         .eq('claimed', false)
         .lte('end_date', new Date().toISOString());
@@ -162,7 +221,6 @@ const VolatilityPrediction: React.FC = () => {
           const reward = Math.floor(stake.amount * (1 + stake.reward_rate));
           totalReward += reward;
           
-          // 스테이킹 완료 처리
           await supabase
             .from('staking')
             .update({ 
@@ -172,83 +230,415 @@ const VolatilityPrediction: React.FC = () => {
             .eq('id', stake.id);
         }
         
-        // 포인트 한번에 업데이트
         const newPoints = userPoints + totalReward;
         await supabase
           .from('users')
           .update({ points: newPoints })
-          .eq(user.wallet_address ? 'wallet_address' : 'email',
-              user.wallet_address || user.email);
+          .eq('id', user.id);
         
         setUserPoints(newPoints);
         alert(`🎉 스테이킹 만기! +${totalReward}P 지급 완료!`);
       }
     } catch (error) {
       console.error('Staking check error:', error);
+    } finally {
+      stakingCheckRef.current = false;
     }
   };
 
-  // 지갑 섹션 컴포넌트
-  const WalletSection = () => {
-    const copyAddress = () => {
-      if (user?.wallet_address) {
-        navigator.clipboard.writeText(user.wallet_address);
-        setCopiedAddress(true);
-        setTimeout(() => setCopiedAddress(false), 2000);
+  // 출금 처리 함수
+  const handleWithdraw = async () => {
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+      alert('출금할 금액을 입력하세요');
+      return;
+    }
+    
+    if (!withdrawAddress || !ethers.isAddress(withdrawAddress)) {
+      alert('올바른 지갑 주소를 입력하세요');
+      return;
+    }
+    
+    if (parseFloat(withdrawAmount) > parseFloat(currentTokenBalance)) {
+      alert('잔액이 부족합니다');
+      return;
+    }
+    
+    try {
+      setIsWithdrawing(true);
+      
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const walletAddress = await signer.getAddress();
+      
+      const tokenContract = new ethers.Contract(BITUSDT_ADDRESS, ERC20_ABI, signer);
+      
+      const amount = ethers.parseEther(withdrawAmount);
+      const tx = await tokenContract.transfer(withdrawAddress, amount);
+      
+      console.log('Withdrawal transaction sent:', tx.hash);
+      const receipt = await tx.wait();
+      console.log('Withdrawal confirmed:', receipt);
+      
+      await supabase.from('withdrawal_history').insert({
+        user_id: user.id,
+        from_address: walletAddress,
+        to_address: withdrawAddress,
+        amount: parseFloat(withdrawAmount),
+        token: 'BITUSDT',
+        tx_hash: tx.hash,
+        network: 'sepolia',
+        status: 'completed',
+        created_at: new Date().toISOString()
+      });
+      
+      alert(`✅ 출금 완료!\n\n${withdrawAmount} BITUSDT\n\n받는 주소: ${withdrawAddress.slice(0,6)}...${withdrawAddress.slice(-4)}\n\nTx: ${tx.hash.slice(0,10)}...`);
+      
+      setShowWithdrawModal(false);
+      setWithdrawAmount('');
+      setWithdrawAddress('');
+      
+    } catch (error: any) {
+      console.error('Withdrawal failed:', error);
+      
+      if (error.code === 4001) {
+        alert('사용자가 트랜잭션을 취소했습니다');
+      } else if (error.message.includes('insufficient')) {
+        alert('가스비가 부족합니다. ETH를 충전하세요');
+      } else {
+        alert(`출금 실패: ${error.message}`);
+      }
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
+  // WalletSection 컴포넌트
+  const WalletSection = memo(() => {
+    const [isConnecting, setIsConnecting] = useState(false);
+    const [walletAddress, setWalletAddress] = useState<string>('');
+    const [tokenBalance, setTokenBalance] = useState<string>('0');
+    const [copied, setCopied] = useState(false);
+    const mountedRef = useRef(true);
+    
+    const loadTokenBalance = async (address?: string) => {
+      if (!mountedRef.current) return;
+      
+      try {
+        if (!window.ethereum) return;
+        
+        const targetAddress = address || walletAddress || user?.wallet_address;
+        if (!targetAddress) return;
+        
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const tokenContract = new ethers.Contract(BITUSDT_ADDRESS, ERC20_ABI, provider);
+        
+        const balance = await tokenContract.balanceOf(targetAddress);
+        const formattedBalance = ethers.formatUnits(balance, 18);
+        
+        if (mountedRef.current) {
+          setTokenBalance(formattedBalance);
+          setCurrentTokenBalance(formattedBalance);
+          setBitUSDTBalance(parseFloat(formattedBalance));
+        }
+      } catch (error) {
+        console.error('Failed to load token balance:', error);
+        if (mountedRef.current) {
+          setTokenBalance('0');
+          setCurrentTokenBalance('0');
+        }
       }
     };
+    
+    const copyToClipboard = () => {
+      navigator.clipboard.writeText(BITUSDT_ADDRESS);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+    
+    const handleConnectWallet = async () => {
+      if (isConnecting) return;
+      
+      if (!window.ethereum) {
+        alert("메타마스크를 설치하세요!");
+        return;
+      }
+      
+      try {
+        setIsConnecting(true);
+        
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const signer = await provider.getSigner();
+        const address = await signer.getAddress();
+        
+        console.log('Connected wallet:', address);
+        setWalletAddress(address);
+        
+        await loadTokenBalance(address);
+        
+        const network = await provider.getNetwork();
+        console.log('Network:', network.chainId);
+        
+        if (network.chainId !== 11155111n) {
+          const switchNetwork = window.confirm('Sepolia 테스트넷으로 변경하시겠습니까?');
+          if (switchNetwork) {
+            try {
+              await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: '0xaa36a7' }],
+              });
+            } catch (switchError: any) {
+              if (switchError.code === 4902) {
+                alert('메타마스크에 Sepolia 네트워크를 추가해주세요.');
+              }
+            }
+          }
+        }
+        
+        if (user?.id) {
+          const { error } = await supabase
+            .from('users')
+            .update({ wallet_address: address })
+            .eq('id', user.id);
+          
+          if (error) {
+            console.error('Supabase update error:', error);
+          }
+          
+          setUser({ ...user, wallet_address: address });
+        }
+        
+        alert(`지갑이 연결되었습니다!\n주소: ${address.slice(0, 6)}...${address.slice(-4)}`);
+        
+      } catch (error: any) {
+        console.error('Wallet connection error:', error);
+        
+        if (error.code === 4001) {
+          alert('사용자가 연결을 거부했습니다.');
+        } else if (error.code === -32002) {
+          alert('이미 메타마스크 연결 요청이 대기 중입니다.');
+        } else {
+          alert(`연결 실패: ${error.message || '알 수 없는 오류'}`);
+        }
+      } finally {
+        setIsConnecting(false);
+      }
+    };
+
+    const handleDisconnectWallet = async () => {
+      if (user?.id) {
+        await supabase
+          .from('users')
+          .update({ wallet_address: null })
+          .eq('id', user.id);
+        
+        setUser({ ...user, wallet_address: null });
+        setWalletAddress('');
+        setTokenBalance('0');
+        alert('지갑 연결이 해제되었습니다.');
+      }
+    };
+
+    useEffect(() => {
+      mountedRef.current = true;
+      
+      const checkExistingConnection = async () => {
+        if (window.ethereum && user?.wallet_address && mountedRef.current) {
+          try {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const accounts = await provider.listAccounts();
+            
+            if (accounts.length > 0 && mountedRef.current) {
+              const signer = await provider.getSigner();
+              const address = await signer.getAddress();
+              setWalletAddress(address);
+              await loadTokenBalance(address);
+            }
+          } catch (error) {
+            console.error('Failed to check existing connection:', error);
+          }
+        }
+      };
+      
+      checkExistingConnection();
+      
+      return () => {
+        mountedRef.current = false;
+      };
+    }, []);
 
     return (
       <div className="wallet-section">
         <div className="network-selector">
-          <label>네트워크 선택</label>
-          <select 
-            value={selectedNetwork} 
-            onChange={(e) => setSelectedNetwork(e.target.value)}
-            className="network-select"
-          >
-            <option value="sepolia">Ethereum Sepolia</option>
-            <option value="mumbai">Polygon Mumbai</option>
-            <option value="devnet">Solana Devnet</option>
-          </select>
-        </div>
-
-        <div className="wallet-balance-card">
-          <h4>테스트넷 USDT 잔액</h4>
-          <div className="balance-display">
-            <span className="balance-amount">{usdtBalance.toFixed(2)}</span>
-            <span className="balance-unit">USDT</span>
+          <label>네트워크</label>
+          <div className="network-display">
+            Ethereum Sepolia
           </div>
         </div>
 
-        <div className="wallet-address-card">
-          <h4>입금 주소</h4>
-          <div className="address-display">
-            <span className="address-text">
-              {user?.wallet_address ? 
-                `${user.wallet_address.slice(0, 6)}...${user.wallet_address.slice(-4)}` : 
-                '지갑 연결 필요'}
+        <div className="wallet-management">
+          <h4>지갑 관리</h4>
+          <div className="wallet-status">
+            <span className="status-label">현재 연결된 지갑:</span>
+            <span className="status-address">
+              {walletAddress || user?.wallet_address ? 
+                `${(walletAddress || user?.wallet_address).slice(0, 6)}...${(walletAddress || user?.wallet_address).slice(-4)}` : 
+                '없음'}
             </span>
-            <button onClick={copyAddress} className="copy-btn">
-              {copiedAddress ? '✓' : '📋'}
+          </div>
+          
+          {!walletAddress && !user?.wallet_address ? (
+            <button 
+              className="connect-new-wallet-btn"
+              onClick={handleConnectWallet}
+              disabled={isConnecting}
+            >
+              {isConnecting ? '연결 중...' : '🔗 지갑 연결'}
             </button>
+          ) : (
+            <button 
+              className="disconnect-wallet-btn"
+              onClick={handleDisconnectWallet}
+              style={{
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '10px 20px',
+                cursor: 'pointer',
+                marginTop: '10px',
+                width: '100%'
+              }}
+            >
+              지갑 연결 해제
+            </button>
+          )}
+        </div>
+
+        {(walletAddress || user?.wallet_address) && (
+          <div className="wallet-management" style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '15px',
+            borderRadius: '8px',
+            marginTop: '15px'
+          }}>
+            <h4 style={{ color: 'white', marginBottom: '12px' }}>💎 BITUSDT 토큰</h4>
+            
+            <div className="wallet-status" style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              padding: '10px',
+              borderRadius: '6px',
+              marginBottom: '10px'
+            }}>
+              <span className="status-label" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>잔액:</span>
+              <span className="status-address" style={{ 
+                color: 'white', 
+                fontSize: '18px', 
+                fontWeight: 'bold' 
+              }}>
+                {parseFloat(tokenBalance).toFixed(2)} BITUSDT
+              </span>
+            </div>
+            
+            <div className="wallet-status" style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              padding: '10px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ flex: 1 }}>
+                <span className="status-label" style={{ 
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '12px',
+                  display: 'block',
+                  marginBottom: '4px'
+                }}>
+                  컨트랙트 주소:
+                </span>
+                <span className="status-address" style={{ 
+                  color: 'white',
+                  fontSize: '11px',
+                  wordBreak: 'break-all'
+                }}>
+                  {BITUSDT_ADDRESS}
+                </span>
+              </div>
+              <button
+                onClick={copyToClipboard}
+                style={{
+                  background: copied ? '#10b981' : 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '4px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  marginLeft: '8px',
+                  transition: 'all 0.3s',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+                title="클립보드에 복사"
+              >
+                {copied ? '✓' : '📋'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="wallet-management">
+          <h4>계정 정보</h4>
+          <div className="wallet-status">
+            <span className="status-label">이메일:</span>
+            <span className="status-address">
+              {user?.email || '로그인 필요'}
+            </span>
+          </div>
+        </div>
+
+        <div className="wallet-balance-card">
+          <h4>포인트 잔액</h4>
+          <div className="balance-display">
+            <span className="balance-amount">{userPoints}</span>
+            <span className="balance-unit">P</span>
           </div>
         </div>
 
         <div className="wallet-actions">
-          <button className="action-btn withdraw">
+          <button 
+            className="action-btn free-points"
+            onClick={claimFreePoints}
+          >
+            무료 100P 받기
+          </button>
+          <button 
+            className="action-btn withdraw"
+            onClick={() => {
+              setCurrentTokenBalance(tokenBalance);
+              setShowWithdrawModal(true);
+            }}
+          >
             출금하기
           </button>
-          <button className="action-btn history">
+          <button 
+            className="action-btn history"
+            onClick={() => alert('거래내역 기능은 준비중입니다.')}
+          >
             거래내역
           </button>
         </div>
       </div>
     );
-  };
+  });
 
   // 스테이킹 섹션 컴포넌트
-  const StakingSection = () => {
+  const StakingSection = memo(() => {
     const handleStaking = async () => {
       if (stakingAmount <= 0 || stakingAmount > userPoints) {
         alert('올바른 스테이킹 금액을 입력하세요');
@@ -261,7 +651,7 @@ const VolatilityPrediction: React.FC = () => {
 
       try {
         await supabase.from('staking').insert({
-          user_id: user.wallet_address || user.email,
+          user_id: user.id,
           amount: stakingAmount,
           days: stakingDays,
           reward_rate: reward,
@@ -274,8 +664,7 @@ const VolatilityPrediction: React.FC = () => {
         const newPoints = userPoints - stakingAmount;
         await supabase.from('users')
           .update({ points: newPoints })
-          .eq(user.wallet_address ? 'wallet_address' : 'email', 
-              user.wallet_address || user.email);
+          .eq('id', user.id);
 
         setUserPoints(newPoints);
         alert(`${stakingAmount}P 스테이킹 완료! ${stakingDays}일 후 ${Math.floor(stakingAmount * (1 + reward))}P 수령`);
@@ -361,91 +750,228 @@ const VolatilityPrediction: React.FC = () => {
         </div>
       </div>
     );
-  };
+  });
 
-  // 스왑 섹션 컴포넌트
-  const SwapSection = () => {
-    const handleSwap = async () => {
-      if (swapAmount < 4000 || swapAmount > userPoints) {
-        alert('최소 4000P 이상, 보유 포인트 이내로 입력하세요');
+  // 수정된 SwapSection 컴포넌트 - props로 상태 받기
+  const SwapSection = React.memo(({ 
+    userPoints, 
+    setUserPoints, 
+    user,
+    swapAmount,
+    setSwapAmount 
+  }: {
+    userPoints: number;
+    setUserPoints: (points: number) => void;
+    user: any;
+    swapAmount: number;
+    setSwapAmount: (amount: number) => void;
+  }) => {
+    const receiveAmount = swapAmount / 100;
+    
+    const [isSwapping, setIsSwapping] = useState(false);
+    const [userBitUSDTBalance, setUserBitUSDTBalance] = useState<string>('0');
+    const [isInitialized, setIsInitialized] = useState(false);
+    
+    const TOKEN_ABI = [
+      "function balanceOf(address) view returns (uint256)",
+      "function decimals() view returns (uint8)",
+      "function mint(address to, uint256 amount) external"
+    ];
+
+    const loadTokenBalance = useCallback(async () => {
+      if (!window.ethereum || !user?.wallet_address) return;
+      
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const tokenContract = new ethers.Contract(BITUSDT_ADDRESS, TOKEN_ABI, provider);
+        
+        const balance = await tokenContract.balanceOf(user.wallet_address);
+        const formattedBalance = ethers.formatUnits(balance, 18);
+        setUserBitUSDTBalance(formattedBalance);
+      } catch (error) {
+        console.error('Balance load failed:', error);
+        setUserBitUSDTBalance('0');
+      }
+    }, [user?.wallet_address]);
+
+    useEffect(() => {
+      if (!isInitialized && user?.wallet_address) {
+        setIsInitialized(true);
+        loadTokenBalance();
+      }
+    }, [isInitialized, user?.wallet_address, loadTokenBalance]);
+
+    const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = Number(e.target.value);
+      setSwapAmount(Math.min(value, userPoints));
+    }, [userPoints, setSwapAmount]);
+
+    const handleSwap = useCallback(async () => {
+      if (!user?.wallet_address) {
+        alert('먼저 지갑을 연결해주세요!');
+        setActiveMenuTab('wallet');
         return;
       }
-
+      
+      if (swapAmount < 100 || swapAmount > userPoints) {
+        alert('100P 이상, 보유 포인트 이내로 입력하세요');
+        return;
+      }
+    
       try {
-        const newPoints = userPoints - swapAmount;
-        const usdtAmount = swapAmount / 100;
+        setIsSwapping(true);
         
-        await supabase.from('swap_history').insert({
-          user_id: user.wallet_address || user.email,
-          points: swapAmount,
-          usdt: usdtAmount,
-          network: selectedNetwork,
-          status: 'pending',
-          created_at: new Date().toISOString()
+        // Edge Function 호출
+        const { data, error } = await supabase.functions.invoke('swap', {
+          body: {
+            userId: user.id,
+            points: swapAmount,
+            walletAddress: user.wallet_address
+          }
         });
         
-        await supabase.from('users')
-          .update({ points: newPoints })
-          .eq(user.wallet_address ? 'wallet_address' : 'email',
-              user.wallet_address || user.email);
+        if (error) {
+          throw new Error(error.message || '스왑 실패');
+        }
         
-        setUserPoints(newPoints);
-        setUsdtBalance(prev => prev + usdtAmount);
+        if (data?.txHash) {
+          const newPoints = userPoints - swapAmount;
+          setUserPoints(newPoints);
+          await loadTokenBalance();
+          
+          alert(`✅ 스왑 완료!\n\n${swapAmount}P → ${receiveAmount} BITUSDT\n\nTx Hash: ${data.txHash.slice(0,10)}...${data.txHash.slice(-8)}`);
+          setSwapAmount(100);
+        }
         
-        alert(`${swapAmount}P → ${usdtAmount} USDT 스왑 요청 완료!`);
-        setSwapAmount(4000);
-      } catch (error) {
-        alert('스왑 실패. 잠시 후 다시 시도하세요.');
+      } catch (error: any) {
+        console.error('Swap failed:', error);
+        alert(`스왑 실패: ${error.message}`);
+      } finally {
+        setIsSwapping(false);
       }
-    };
+    }, [swapAmount, receiveAmount, userPoints, user, loadTokenBalance, setUserPoints, setSwapAmount]);
 
     return (
       <div className="swap-section">
         <div className="swap-rate-info">
           <h4>교환 비율</h4>
           <div className="rate-display">
-            <span>1000 P = 10 USDT</span>
+            <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#fcd535' }}>
+              100 P = 1 BITUSDT
+            </span>
           </div>
           <div className="minimum-info">
-            최소 교환: 4000 P
+            최소 교환: 100 P
           </div>
         </div>
-
+        
+        <div className="current-balance">
+          <div className="balance-row">
+            <span>보유 포인트:</span>
+            <span>{userPoints} P</span>
+          </div>
+          <div className="balance-row" style={{
+            marginTop: '8px',
+            padding: '8px',
+            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
+            borderRadius: '6px',
+            border: '1px solid rgba(102, 126, 234, 0.3)'
+          }}>
+            <span>보유 BITUSDT:</span>
+            <span style={{ color: '#667eea', fontWeight: 'bold' }}>
+              {parseFloat(userBitUSDTBalance).toFixed(2)} BITUSDT
+            </span>
+          </div>
+        </div>
+        
         <div className="swap-input-group">
           <label>스왑할 포인트</label>
           <input
             type="number"
             value={swapAmount}
-            onChange={(e) => setSwapAmount(Number(e.target.value))}
-            min="4000"
-            step="1000"
+            onChange={handleAmountChange}
+            min="100"
+            step="100"
             max={userPoints}
+            disabled={isSwapping}
           />
-          <div className="swap-output">
-            <span className="output-label">받을 금액:</span>
-            <span className="output-amount">{(swapAmount / 100).toFixed(2)} USDT</span>
+          <div className="swap-output" style={{
+            background: 'rgba(102, 126, 234, 0.05)',
+            padding: '10px',
+            borderRadius: '6px',
+            marginTop: '10px'
+          }}>
+            <span className="output-label">받을 토큰:</span>
+            <span className="output-amount" style={{ 
+              color: '#667eea',
+              fontSize: '20px',
+              fontWeight: 'bold'
+            }}>
+              {receiveAmount.toFixed(2)} BITUSDT
+            </span>
           </div>
         </div>
 
-        <div className="network-info">
-          <label>수령 네트워크</label>
-          <div className="selected-network">
-            {selectedNetwork === 'mumbai' ? 'Polygon Mumbai' : 
-             selectedNetwork === 'sepolia' ? 'Ethereum Sepolia' : 
-             'Solana Devnet'}
+        {!user?.wallet_address && (
+          <div style={{
+            padding: '10px',
+            background: 'rgba(246, 70, 93, 0.1)',
+            borderRadius: '6px',
+            marginBottom: '10px',
+            color: '#f6465d',
+            fontSize: '14px',
+            textAlign: 'center'
+          }}>
+            ⚠️ 지갑 연결이 필요합니다
           </div>
-        </div>
-
+        )}
+        
         <button 
           className="swap-confirm-btn"
           onClick={handleSwap}
-          disabled={swapAmount < 4000 || swapAmount > userPoints}
+          disabled={isSwapping || swapAmount < 100 || swapAmount > userPoints || !user?.wallet_address}
+          style={{
+            background: isSwapping ? '#2b3139' : 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+            opacity: (!user?.wallet_address || swapAmount < 100 || swapAmount > userPoints) ? 0.5 : 1,
+            cursor: (isSwapping || !user?.wallet_address || swapAmount < 100 || swapAmount > userPoints) ? 'not-allowed' : 'pointer'
+          }}
         >
-          스왑하기
+          {isSwapping ? '스왑 진행중...' : '스왑하기'}
         </button>
+
+        <div style={{
+          marginTop: '15px',
+          padding: '10px',
+          background: 'rgba(255, 255, 255, 0.03)',
+          borderRadius: '6px',
+          fontSize: '12px',
+          color: '#848e9c'
+        }}>
+          <p>📌 스왑 절차:</p>
+          <ol style={{ marginLeft: '20px', marginTop: '5px' }}>
+            <li>스왑할 포인트 입력</li>
+            <li>메타마스크에서 트랜잭션 승인</li>
+            <li>BITUSDT 토큰 자동 지급</li>
+          </ol>
+        </div>
+
+        <div style={{
+          marginTop: '10px',
+          textAlign: 'center',
+          fontSize: '11px'
+        }}>
+          <a 
+            href={`https://sepolia.etherscan.io/address/${BITUSDT_ADDRESS}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#667eea', textDecoration: 'none' }}
+          >
+            컨트랙트 보기 →
+          </a>
+        </div>
       </div>
     );
-  };
+  });
 
   // 게임 룰 섹션 컴포넌트
   const RulesSection = () => (
@@ -506,7 +1032,87 @@ const VolatilityPrediction: React.FC = () => {
     </div>
   );
 
-  // 기존 함수들
+  // WebSocket 연결 함수
+  const connectWebSocket = useCallback(() => {
+    // 기존 연결 정리
+    if (ws.current) {
+      ws.current.close();
+      ws.current = null;
+    }
+  
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  
+    if (!isMountedRef.current) return;
+  
+    try {
+      ws.current = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
+      
+      // 연결 타임아웃 설정 (10초)
+      const connectionTimeout = setTimeout(() => {
+        if (ws.current?.readyState === WebSocket.CONNECTING) {
+          console.log('WebSocket connection timeout, retrying...');
+          ws.current?.close();
+        }
+      }, 10000);
+      
+      ws.current.onopen = () => {
+        clearTimeout(connectionTimeout); // 연결 성공 시 타임아웃 해제
+        console.log('Binance WebSocket connected');
+      };
+      
+      ws.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          setCurrentPrice(parseFloat(data.c) || 0);
+          setPriceChange24h(parseFloat(data.P) || 0);
+          setHigh24h(parseFloat(data.h) || 0);
+          setLow24h(parseFloat(data.l) || 0);
+          setVolume24h(parseFloat(data.v) || 0);
+        } catch (err) {
+          console.error('WebSocket data parse error:', err);
+        }
+      };
+      
+      ws.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        clearTimeout(connectionTimeout);
+      };
+      
+      ws.current.onclose = (event) => {
+        console.log('WebSocket closed', event.code, event.reason);
+        clearTimeout(connectionTimeout);
+        ws.current = null;
+        
+        if (isMountedRef.current) {
+          // 재연결 딜레이를 상황에 따라 조절
+          const reconnectDelay = event.code === 1006 ? 5000 : 3000; // 비정상 종료 시 더 긴 딜레이
+          
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (isMountedRef.current) {
+              console.log('Attempting to reconnect WebSocket...');
+              connectWebSocket();
+            }
+          }, reconnectDelay);
+        }
+      };
+    } catch (error) {
+      console.error('WebSocket connection failed:', error);
+      
+      // 연결 실패 시에도 재시도
+      if (isMountedRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (isMountedRef.current) {
+            connectWebSocket();
+          }
+        }, 5000);
+      }
+    }
+  }, []);
+
+  // 프로필 업로드 함수
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploadingAvatar(true);
@@ -517,7 +1123,7 @@ const VolatilityPrediction: React.FC = () => {
 
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.wallet_address || user.email}_${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}_${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -532,15 +1138,9 @@ const VolatilityPrediction: React.FC = () => {
 
       setAvatarUrl(publicUrl);
       
-      if (user.wallet_address) {
-        await supabase.from('users')
-          .update({ avatar_url: publicUrl })
-          .eq('wallet_address', user.wallet_address);
-      } else {
-        await supabase.from('users')
-          .update({ avatar_url: publicUrl })
-          .eq('email', user.email);
-      }
+      await supabase.from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id) ;
 
       alert('프로필 이미지가 업데이트되었습니다!');
     } catch (error: any) {
@@ -557,15 +1157,9 @@ const VolatilityPrediction: React.FC = () => {
     }
 
     try {
-      if (user.wallet_address) {
-        await supabase.from('users')
-          .update({ username: newUsername })
-          .eq('wallet_address', user.wallet_address);
-      } else {
-        await supabase.from('users')
-          .update({ username: newUsername })
-          .eq('email', user.email);
-      }
+      await supabase.from('users')
+        .update({ username: newUsername })
+        .eq('id', user.id) ;
 
       setUser({...user, username: newUsername});
       setIsEditingProfile(false);
@@ -575,191 +1169,7 @@ const VolatilityPrediction: React.FC = () => {
     }
   };
 
-  // useEffect에 스테이킹 체크 추가
-  useEffect(() => {
-    if (user) {
-      checkExpiredStaking(); // 로그인시 만기 체크
-      
-      // 1분마다 체크 (선택사항)
-      const interval = setInterval(checkExpiredStaking, 60000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    loadBearBullRatio();
-    
-    const subscription = supabase
-      .channel('predictions')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'active_predictions' },
-        loadBearBullRatio
-      )
-      .subscribe();
-
-    const interval = setInterval(loadBearBullRatio, 5000);
-
-    return () => {
-      subscription.unsubscribe();
-      clearInterval(interval);
-    };
-  }, []);
-
-  const loadBearBullRatio = async () => {
-    try {
-      const { data } = await supabase
-        .from('active_predictions')
-        .select('prediction')
-        .gte('expires_at', new Date().toISOString());
-      
-      if (data && data.length > 0) {
-        const upCount = data.filter(p => p.prediction === 'up').length;
-        const downCount = data.filter(p => p.prediction === 'down').length;
-        const total = upCount + downCount;
-        
-        setBearBullRatio({
-          bear: total > 0 ? Math.round((downCount / total) * 100) : 50,
-          bull: total > 0 ? Math.round((upCount / total) * 100) : 50
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load bear/bull ratio:', error);
-    }
-  };
-
-  useEffect(() => {
-    checkUser();
-    connectWebSocket();
-    loadLeaderboard();
-    if (activeTab === 'original') {
-      initTradingViewChart();
-    }
-    loadMarketIndicators();
-    
-    return () => {
-      if (ws.current) {
-        ws.current.close();
-      }
-    };
-  }, [activeTab]);
-
-  const checkUser = async () => {
-    const walletAddress = localStorage.getItem('walletAddress');
-    if (walletAddress) {
-      const { data } = await supabase
-        .from('users')
-        .select('*')
-        .eq('wallet_address', walletAddress.toLowerCase())
-        .single();
-      
-      if (data) {
-        setUser(data);
-        setUserPoints(data.points);
-        setStreak(data.streak);
-        setTotalWins(data.total_wins || 0);
-        setTotalDraws(data.total_draws || 0);
-        setTotalLosses(data.total_losses || 0);
-        setAvatarUrl(data.avatar_url || '');
-        
-        const total = (data.total_wins || 0) + (data.total_losses || 0);
-        setWinRate(total > 0 ? Math.round((data.total_wins / total) * 100) : 0);
-        
-        setConsecutiveDays(data.consecutive_days || 0);
-        setLastAttendance(data.last_attendance ? new Date(data.last_attendance) : null);
-        return;
-      }
-    }
-
-    const { data: { session } } = await supabase.auth.getSession();
-    setUser(session?.user ?? null);
-    if (session?.user) {
-      await loadUserData(session.user);
-    }
-  };
-
-  const loadUserData = async (user: any) => {
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', user.email)
-      .single();
-    
-    if (data) {
-      setUserPoints(data.points);
-      setStreak(data.streak);
-      setTotalWins(data.total_wins || 0);
-      setTotalDraws(data.total_draws || 0);
-      setTotalLosses(data.total_losses || 0);
-      setAvatarUrl(data.avatar_url || '');
-      
-      const total = (data.total_wins || 0) + (data.total_losses || 0);
-      setWinRate(total > 0 ? Math.round((data.total_wins / total) * 100) : 0);
-      
-      setConsecutiveDays(data.consecutive_days || 0);
-      setLastAttendance(data.last_attendance ? new Date(data.last_attendance) : null);
-    }
-  };
-
-  const loadMarketIndicators = async () => {
-    try {
-      const response = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT');
-      const data = await response.json();
-      
-      setMarketIndicators({
-        fearGreedIndex: 53,
-        fearGreedText: 'Neutral',
-        fundingRate: parseFloat(data.lastFundingRate || 0.0001) * 100,
-        longShortRatio: 1.00
-      });
-    } catch (error) {
-      console.error('Failed to load market indicators:', error);
-    }
-  };
-
-  const loadLeaderboard = async () => {
-    const { data } = await supabase
-      .from('users')
-      .select('username, points, total_wins, total_losses')
-      .order('points', { ascending: false })
-      .limit(10);
-    
-    if (data) {
-      setLeaderboard(data.map((item, index) => ({
-        rank: index + 1,
-        username: item.username || 'Anonymous',
-        points: item.points,
-        winRate: (item.total_wins && item.total_losses) ? 
-          Math.round((item.total_wins / (item.total_wins + item.total_losses)) * 100) : 0
-      })));
-    }
-  };
-
-  const connectWebSocket = () => {
-    ws.current = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
-    
-    ws.current.onopen = () => {
-      console.log('Binance WebSocket connected');
-    };
-    
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setCurrentPrice(parseFloat(data.c));
-      setPriceChange24h(parseFloat(data.P));
-      setHigh24h(parseFloat(data.h));
-      setLow24h(parseFloat(data.l));
-      setVolume24h(parseFloat(data.v));
-    };
-    
-    ws.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-    
-    ws.current.onclose = () => {
-      console.log('WebSocket closed, reconnecting...');
-      setTimeout(connectWebSocket, 3000);
-    };
-  };
-
+  // TradingView 차트 초기화
   const initTradingViewChart = () => {
     if (chartContainerRef.current && activeTab === 'original') {
       chartContainerRef.current.innerHTML = '';
@@ -793,22 +1203,250 @@ const VolatilityPrediction: React.FC = () => {
     }
   };
 
+  // 사용자 확인
+  const checkUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setUser(session?.user ?? null);
+    if (session?.user) {
+      // users 테이블 체크 및 생성
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (!userData || error) {
+        // users 테이블에 데이터가 없으면 생성
+        console.log('Creating missing user data...');
+        const { error: insertError } = await supabase.from('users').insert([
+          {
+            id: session.user.id,
+            email: session.user.email,
+            username: session.user.email?.split('@')[0],
+            points: 1000,
+            streak: 0,
+            total_wins: 0,
+            total_draws: 0,
+            total_losses: 0,
+            consecutive_days: 0,
+            created_at: new Date().toISOString()
+          }
+        ]);
+        
+        if (!insertError) {
+          alert('신규 유저 보너스 1000P가 지급되었습니다!');
+        }
+      }
+      
+      await loadUserData(session.user);
+    }
+  };
+
+  // 사용자 데이터 로드
+  const loadUserData = async (user: any) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error loading user data:', error);
+        return;
+      }
+      
+      if (data) {
+        console.log('Loaded user data:', data);
+        setUserPoints(data.points || 0);
+        setStreak(data.streak || 0);
+        setTotalWins(data.total_wins || 0);
+        setTotalDraws(data.total_draws || 0);
+        setTotalLosses(data.total_losses || 0);
+        setAvatarUrl(data.avatar_url || '');
+        
+        const total = (data.total_wins || 0) + (data.total_losses || 0);
+        setWinRate(total > 0 ? Math.round((data.total_wins / total) * 100) : 0);
+        
+        setConsecutiveDays(data.consecutive_days || 0);
+        setLastAttendance(data.last_attendance ? new Date(data.last_attendance) : null);
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+    }
+  };
+
+  // 시장 지표 로드
+  const loadMarketIndicators = async () => {
+    try {
+      const response = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT');
+      const data = await response.json();
+      
+      setMarketIndicators({
+        fearGreedIndex: 53,
+        fearGreedText: 'Neutral',
+        fundingRate: parseFloat(data.lastFundingRate || '0.0001') * 100,
+        longShortRatio: 1.00
+      });
+    } catch (error) {
+      console.error('Failed to load market indicators:', error);
+    }
+  };
+
+  // 리더보드 로드
+  const loadLeaderboard = async () => {
+    const { data } = await supabase
+      .from('users')
+      .select('username, points, total_wins, total_losses')
+      .order('points', { ascending: false })
+      .limit(10);
+    
+    if (data) {
+      setLeaderboard(data.map((item, index) => ({
+        rank: index + 1,
+        username: item.username || 'Anonymous',
+        points: item.points,
+        winRate: (item.total_wins && item.total_losses) ? 
+          Math.round((item.total_wins / (item.total_wins + item.total_losses)) * 100) : 0
+      })));
+    }
+  };
+
+  // Bear/Bull 비율 로드 - 최적화
+  const loadBearBullRatio = async () => {
+    // 캐시 확인 (10초 이내 데이터는 재사용)
+    if (bearBullCacheRef.current) {
+      const age = Date.now() - bearBullCacheRef.current.timestamp;
+      if (age < 10000) return; // 10초 이내면 스킵
+    }
+
+    try {
+      const { data } = await supabase
+        .from('active_predictions')
+        .select('prediction')
+        .gte('expires_at', new Date().toISOString());
+      
+      if (data && data.length > 0) {
+        const upCount = data.filter((p: any) => p.prediction === 'up').length;
+        const downCount = data.filter((p: any) => p.prediction === 'down').length;
+        const total = upCount + downCount;
+        
+        setBearBullRatio({
+          bear: total > 0 ? Math.round((downCount / total) * 100) : 50,
+          bull: total > 0 ? Math.round((upCount / total) * 100) : 50
+        });
+        
+        // 캐시 업데이트
+        bearBullCacheRef.current = {
+          data: { bear: bearBullRatio.bear, bull: bearBullRatio.bull },
+          timestamp: Date.now()
+        };
+      }
+    } catch (error) {
+      console.error('Failed to load bear/bull ratio:', error);
+    }
+  };
+
+  // 인증 처리 - 로그인
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
-
+  
     try {
-      if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        // users 테이블에 해당 유저가 있는지 확인
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
         
-        if (data.user) {
+        if (!userData || userError) {
+          // 유저 데이터가 없으면 생성
+          console.log('Creating missing user data...');
           await supabase.from('users').insert([
             {
+              id: data.user.id,
+              email: data.user.email,
+              username: data.user.email?.split('@')[0],
+              points: 1000,  // 신규 유저 보너스
+              streak: 0,
+              total_wins: 0,
+              total_draws: 0,
+              total_losses: 0,
+              consecutive_days: 0,
+              created_at: new Date().toISOString()
+            }
+          ]);
+          
+          // 다시 로드
+          await loadUserData(data.user);
+        } else {
+          await loadUserData(data.user);
+        }
+      }
+      
+      setUser(data.user);
+      setShowLoginModal(false);
+      
+      if (data.user) {
+        localStorage.setItem('userEmail', data.user.email!);
+      }
+      
+    } catch (error: any) {
+      setMessage(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 회원가입 처리
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+  
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        // users 테이블에 데이터 삽입 - upsert 사용으로 중복 방지
+        const { error: insertError } = await supabase.from('users').upsert([
+          {
+            id: data.user.id,
+            email: data.user.email,
+            username: email.split('@')[0],
+            points: 1000,  // 초기 포인트
+            streak: 0,
+            total_wins: 0,
+            total_draws: 0,
+            total_losses: 0,
+            consecutive_days: 0,
+            created_at: new Date().toISOString()
+          }
+        ], {
+          onConflict: 'id'
+        });
+
+        if (insertError) {
+          console.error('User table insert error:', insertError);
+          // 실패 시 재시도
+          const { error: retryError } = await supabase.from('users').insert([
+            {
+              id: data.user.id,
               email: data.user.email,
               username: email.split('@')[0],
               points: 1000,
@@ -819,18 +1457,17 @@ const VolatilityPrediction: React.FC = () => {
               consecutive_days: 0
             }
           ]);
+          
+          if (retryError) {
+            console.error('Retry failed:', retryError);
+          }
         }
-        setMessage('회원가입 성공!');
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        setUser(data.user);
-        setShowLoginModal(false);
-        if (data.user) loadUserData(data.user);
       }
+      
+      setMessage('회원가입 성공!');
+      setShowSignupModal(false);
+      alert('회원가입이 완료되었습니다! 1000P가 지급되었습니다.');
+      
     } catch (error: any) {
       setMessage(error.message);
     } finally {
@@ -838,9 +1475,10 @@ const VolatilityPrediction: React.FC = () => {
     }
   };
 
+  // 예측 함수
   const makePrediction = async (direction: 'up' | 'down') => {
     if (!user) {
-      setShowWalletModal(true);
+      setShowLoginModal(true);
       return;
     }
     
@@ -852,7 +1490,7 @@ const VolatilityPrediction: React.FC = () => {
     
     try {
       await supabase.from('active_predictions').insert({
-        user_id: user.wallet_address || user.email,
+        user_id: user.id,
         prediction: direction,
         expires_at: new Date(Date.now() + selectedTime * 1000).toISOString()
       });
@@ -877,6 +1515,7 @@ const VolatilityPrediction: React.FC = () => {
     }, 1000);
   };
 
+  // 결과 확인
   const checkResult = async (direction: 'up' | 'down') => {
     const endPrice = currentPrice;
     const changePercent = ((endPrice - startPrice) / startPrice) * 100;
@@ -916,8 +1555,8 @@ const VolatilityPrediction: React.FC = () => {
     }
     
     await supabase.from('predictions').insert([{
-      user_id: user.email || null,
-      wallet_address: user.wallet_address || null,
+      user_id: user.id,
+      wallet_address: null,
       prediction: direction,
       actual_change: changePercent,
       is_correct: result === 'win',
@@ -933,27 +1572,15 @@ const VolatilityPrediction: React.FC = () => {
     const newDraws = result === 'draw' ? totalDraws + 1 : totalDraws;
     const newLosses = result === 'lose' ? totalLosses + 1 : totalLosses;
     
-    if (user.wallet_address) {
-      await supabase.from('users')
-        .update({ 
-          points: newPoints,
-          streak: newStreak,
-          total_wins: newWins,
-          total_draws: newDraws,
-          total_losses: newLosses
-        })
-        .eq('wallet_address', user.wallet_address);
-    } else {
-      await supabase.from('users')
-        .update({ 
-          points: newPoints,
-          streak: newStreak,
-          total_wins: newWins,
-          total_draws: newDraws,
-          total_losses: newLosses
-        })
-        .eq('email', user.email);
-    }
+    await supabase.from('users')
+      .update({ 
+        points: newPoints,
+        streak: newStreak,
+        total_wins: newWins,
+        total_draws: newDraws,
+        total_losses: newLosses
+      })
+      .eq('id', user.id);
     
     setUserPoints(newPoints);
     setStreak(newStreak);
@@ -980,9 +1607,10 @@ const VolatilityPrediction: React.FC = () => {
     alert(resultMessage);
   };
 
+  // 출석 체크
   const handleDailyAttendance = async () => {
     if (!user) {
-      setShowWalletModal(true);
+      setShowLoginModal(true);
       return;
     }
     
@@ -1018,23 +1646,13 @@ const VolatilityPrediction: React.FC = () => {
     
     const newPoints = userPoints + bonusPoints;
     
-    if (user.wallet_address) {
-      await supabase.from('users')
-        .update({
-          points: newPoints,
-          consecutive_days: newConsecutiveDays,
-          last_attendance: today.toISOString()
-        })
-        .eq('wallet_address', user.wallet_address);
-    } else {
-      await supabase.from('users')
-        .update({
-          points: newPoints,
-          consecutive_days: newConsecutiveDays,
-          last_attendance: today.toISOString()
-        })
-        .eq('email', user.email);
-    }
+    await supabase.from('users')
+      .update({
+        points: newPoints,
+        consecutive_days: newConsecutiveDays,
+        last_attendance: today.toISOString()
+      })
+      .eq('id', user.id);
     
     setUserPoints(newPoints);
     setConsecutiveDays(newConsecutiveDays);
@@ -1048,12 +1666,7 @@ const VolatilityPrediction: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    if (user?.wallet_address) {
-      localStorage.removeItem('walletAddress');
-      localStorage.removeItem('walletType');
-    } else {
-      await supabase.auth.signOut();
-    }
+    await supabase.auth.signOut();
     setUser(null);
     setUserPoints(0);
     setStreak(0);
@@ -1063,6 +1676,120 @@ const VolatilityPrediction: React.FC = () => {
     window.location.reload();
   };
 
+  // 글로벌 이벤트 리스너
+  useEffect(() => {
+    if (!window.ethereum) return;
+    
+    let mounted = true;
+    
+    const handleAccountsChanged = (accounts: string[]) => {
+      if (!mounted) return;
+      console.log('Global account change detected:', accounts[0]);
+    };
+    
+    const handleChainChanged = () => {
+      if (!mounted) return;
+      window.location.reload();
+    };
+    
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
+    window.ethereum.on('chainChanged', handleChainChanged);
+    
+    return () => {
+      mounted = false;
+      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      window.ethereum.removeListener('chainChanged', handleChainChanged);
+    };
+  }, []);
+
+  // 초기화 useEffect
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    const initialize = async () => {
+      try {
+        await checkUser();
+        connectWebSocket();
+        loadLeaderboard();
+        loadMarketIndicators();
+      } catch (error) {
+        console.error('Initialization error:', error);
+      }
+    };
+
+    initialize();
+
+    return () => {
+      isMountedRef.current = false;
+      
+      if (ws.current) {
+        ws.current.close();
+        ws.current = null;
+      }
+      
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+    };
+  }, [connectWebSocket]);
+
+  useEffect(() => {
+    if (activeTab === 'original') {
+      initTradingViewChart();
+    }
+  }, [activeTab]);
+
+  // Bear/Bull 비율 로드 - 최적화된 버전
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRatio = async () => {
+      if (!isMounted) return;
+      await loadBearBullRatio();
+    };
+
+    loadRatio();
+    
+    // 60초마다 한 번만 체크
+    const interval = setInterval(() => {
+      if (isMounted) loadBearBullRatio();
+    }, 60000); // 60초
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // 스테이킹 체크 - 최적화된 버전
+  useEffect(() => {
+    if (!user) return;
+
+    let checkInterval: NodeJS.Timeout;
+    let isMounted = true;
+
+    const startChecking = async () => {
+      if (!isMounted) return;
+      await checkExpiredStaking();
+      
+      // 10분마다 체크
+      checkInterval = setInterval(() => {
+        if (isMounted) checkExpiredStaking();
+      }, 600000); // 10분
+    };
+
+    startChecking();
+
+    return () => {
+      isMounted = false;
+      if (checkInterval) {
+        clearInterval(checkInterval);
+      }
+    };
+  }, [user?.id]);
+
+  // JSX 렌더링
   return (
     <div className="trading-platform">
       <header className="platform-header">
@@ -1244,12 +1971,6 @@ const VolatilityPrediction: React.FC = () => {
                   BTC Futures
                 </button>
                 <button 
-                  className={`view-tab ${activeTab === 'tradingview' ? 'active' : ''}`}
-                  onClick={() => handleTabChange('tradingview')}
-                >
-                  Trading View
-                </button>
-                <button 
                   className={`view-tab ${activeTab === 'depth' ? 'active' : ''}`}
                   onClick={() => handleTabChange('depth')}
                 >
@@ -1264,7 +1985,7 @@ const VolatilityPrediction: React.FC = () => {
             {activeTab === 'tradingview' && (
               <div style={{ width: '100%', height: '600px' }}>
                 <iframe
-                  src="https://s.tradingview.com/widgetembed/?symbol=BINANCE%3ABTCUSDTPERP&interval=1&theme=dark&style=1&locale=kr&toolbar_bg=%230b0e11&enable_publishing=false&hide_side_toolbar=false&widgetbar=0&studies_overrides=%7B%7D&overrides=%7B%7D"
+                  src="https://s3.tradingview.com/widgetembed/?symbol=BINANCE%3ABTCUSDTPERP&interval=1&theme=dark&style=1&locale=kr&toolbar_bg=%230b0e11&enable_publishing=false&hide_side_toolbar=false&widgetbar=0&studies_overrides=%7B%7D&overrides=%7B%7D"
                   style={{ width: '100%', height: '100%', border: 'none' }}
                   allowFullScreen
                 ></iframe>
@@ -1450,7 +2171,7 @@ const VolatilityPrediction: React.FC = () => {
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="Avatar" className="avatar-image" />
                     ) : (
-                      <span>{user.wallet_address ? '🦊' : user.email?.[0]?.toUpperCase() || 'U'}</span>
+                      <span>{user.email?.[0]?.toUpperCase() || 'U'}</span>
                     )}
                     <div className="avatar-edit-overlay">
                       <span>✏️</span>
@@ -1458,9 +2179,7 @@ const VolatilityPrediction: React.FC = () => {
                   </div>
                   <div className="user-details">
                     <span className="username" onClick={() => setIsEditingProfile(true)}>
-                      {user.username || (user.wallet_address ? 
-                        `User_${user.wallet_address.slice(0, 6)}` : 
-                        user.email?.split('@')[0])}
+                      {user.username || user.email?.split('@')[0]}
                       <span className="edit-icon">✏️</span>
                     </span>
                     <span className="user-level">Lv. {Math.floor(userPoints / 1000) + 1}</span>
@@ -1520,16 +2239,16 @@ const VolatilityPrediction: React.FC = () => {
             <div className="login-prompt">
               <h3>로그인이 필요합니다</h3>
               <button 
-                className="login-btn wallet-btn"
-                onClick={() => setShowWalletModal(true)}
-              >
-                지갑으로 로그인
-              </button>
-              <button 
                 className="login-btn email-btn"
                 onClick={() => setShowLoginModal(true)}
               >
-                이메일로 로그인
+                로그인
+              </button>
+              <button 
+                className="login-btn signup-btn"
+                onClick={() => setShowSignupModal(true)}
+              >
+                회원가입
               </button>
             </div>
           )}
@@ -1551,10 +2270,214 @@ const VolatilityPrediction: React.FC = () => {
         </aside>
       </div>
 
-      {/* 메뉴 모달 */}
+      {/* 모달들 */}
+      {showWithdrawModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10001
+        }}>
+          <div style={{
+            background: '#1a1d29',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '500px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{ color: 'white', margin: 0 }}>BITUSDT 출금</h3>
+              <button 
+                onClick={() => setShowWithdrawModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#848e9c',
+                  fontSize: '24px',
+                  cursor: 'pointer'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontSize: '14px', 
+                color: '#848e9c' 
+              }}>
+                출금 가능 잔액
+              </label>
+              <div style={{
+                padding: '15px',
+                background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
+                borderRadius: '8px',
+                border: '1px solid rgba(102, 126, 234, 0.3)'
+              }}>
+                <span style={{ 
+                  color: '#667eea', 
+                  fontSize: '24px', 
+                  fontWeight: 'bold' 
+                }}>
+                  {parseFloat(currentTokenBalance).toFixed(2)} BITUSDT
+                </span>
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontSize: '14px', 
+                color: '#848e9c' 
+              }}>
+                출금할 금액
+              </label>
+              <input
+                type="number"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                placeholder="0.0"
+                step="0.01"
+                max={currentTokenBalance}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: '#0b0e11',
+                  border: '1px solid #2b3139',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '16px'
+                }}
+              />
+              <button
+                onClick={() => setWithdrawAmount(currentTokenBalance)}
+                style={{
+                  marginTop: '8px',
+                  padding: '6px 12px',
+                  background: 'rgba(102, 126, 234, 0.2)',
+                  border: '1px solid rgba(102, 126, 234, 0.3)',
+                  borderRadius: '4px',
+                  color: '#667eea',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                MAX
+              </button>
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontSize: '14px', 
+                color: '#848e9c' 
+              }}>
+                받는 지갑 주소
+              </label>
+              <input
+                type="text"
+                value={withdrawAddress}
+                onChange={(e) => setWithdrawAddress(e.target.value)}
+                placeholder="0x..."
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: '#0b0e11',
+                  border: '1px solid #2b3139',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontFamily: 'monospace'
+                }}
+              />
+            </div>
+            
+            <div style={{
+              padding: '12px',
+              background: 'rgba(246, 70, 93, 0.1)',
+              borderRadius: '8px',
+              marginBottom: '20px',
+              fontSize: '12px',
+              color: '#f6465d',
+              border: '1px solid rgba(246, 70, 93, 0.2)'
+            }}>
+              ⚠️ 주의사항:
+              <ul style={{ margin: '8px 0 0 20px', lineHeight: '1.6' }}>
+                <li>Sepolia 테스트넷 주소만 가능</li>
+                <li>출금 후 취소 불가</li>
+                <li>가스비(ETH)가 필요합니다</li>
+                <li>최소 출금: 0.01 BITUSDT</li>
+              </ul>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={handleWithdraw}
+                disabled={isWithdrawing || !withdrawAmount || !withdrawAddress || parseFloat(withdrawAmount) <= 0}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  background: isWithdrawing ? '#2b3139' : 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  cursor: isWithdrawing ? 'not-allowed' : 'pointer',
+                  opacity: (!withdrawAmount || !withdrawAddress || parseFloat(withdrawAmount) <= 0) ? 0.5 : 1
+                }}
+              >
+                {isWithdrawing ? '출금 진행중...' : '출금하기'}
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowWithdrawModal(false);
+                  setWithdrawAmount('');
+                  setWithdrawAddress('');
+                }}
+                disabled={isWithdrawing}
+                style={{
+                  padding: '14px 24px',
+                  background: '#2b3139',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '16px'
+                }}
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showMenuModal && (
         <div className="modal-overlay" onClick={() => setShowMenuModal(false)}>
-          <div className="menu-modal" onClick={e => e.stopPropagation()}>
+          <div 
+            className="menu-modal" 
+            onClick={e => e.stopPropagation()}
+            style={{ willChange: 'auto' }}
+          >
             <button className="close-modal" onClick={() => setShowMenuModal(false)}>×</button>
             
             <h2>메뉴</h2>
@@ -1564,7 +2487,7 @@ const VolatilityPrediction: React.FC = () => {
                 className={`menu-tab ${activeMenuTab === 'wallet' ? 'active' : ''}`}
                 onClick={() => setActiveMenuTab('wallet')}
               >
-                👛 지갑
+                👛 계정
               </button>
               <button 
                 className={`menu-tab ${activeMenuTab === 'staking' ? 'active' : ''}`}
@@ -1589,14 +2512,21 @@ const VolatilityPrediction: React.FC = () => {
             <div className="menu-content">
               {activeMenuTab === 'wallet' && <WalletSection />}
               {activeMenuTab === 'staking' && <StakingSection />}
-              {activeMenuTab === 'swap' && <SwapSection />}
+              {activeMenuTab === 'swap' && (
+                <SwapSection 
+                  userPoints={userPoints} 
+                  setUserPoints={setUserPoints}
+                  user={user}
+                  swapAmount={globalSwapAmount}
+                  setSwapAmount={setGlobalSwapAmount}
+                />
+              )}
               {activeMenuTab === 'rules' && <RulesSection />}
             </div>
           </div>
         </div>
       )}
 
-      {/* 프로필 편집 모달 */}
       {isEditingProfile && (
         <div className="modal-overlay" onClick={() => setIsEditingProfile(false)}>
           <div className="edit-profile-modal" onClick={e => e.stopPropagation()}>
@@ -1610,7 +2540,7 @@ const VolatilityPrediction: React.FC = () => {
                   <img src={avatarUrl} alt="Current Avatar" />
                 ) : (
                   <div className="default-avatar">
-                    {user.wallet_address ? '🦊' : user.email?.[0]?.toUpperCase() || 'U'}
+                    {user.email?.[0]?.toUpperCase() || 'U'}
                   </div>
                 )}
               </div>
@@ -1653,7 +2583,7 @@ const VolatilityPrediction: React.FC = () => {
             <button className="close-modal" onClick={() => setShowLoginModal(false)}>×</button>
             
             <div className="modal-header">
-              <h2>{isSignUp ? '회원가입' : '로그인'}</h2>
+              <h2>로그인</h2>
               <p>비트코인 변동성 예측 게임</p>
             </div>
             
@@ -1679,31 +2609,22 @@ const VolatilityPrediction: React.FC = () => {
               </div>
               
               <button type="submit" className="submit-btn" disabled={loading}>
-                {loading ? '처리중...' : (isSignUp ? '회원가입' : '로그인')}
-              </button>
-              
-              <div className="divider">
-                <span>또는</span>
-              </div>
-              
-              <button 
-                type="button" 
-                className="oauth-btn wallet"
-                onClick={() => {
-                  setShowLoginModal(false);
-                  setShowWalletModal(true);
-                }}
-              >
-                🦊 Web3 지갑으로 로그인
+                {loading ? '처리중...' : '로그인'}
               </button>
               
               <p className="toggle-mode">
-                {isSignUp ? '이미 계정이 있으신가요?' : '처음이신가요?'}
+                처음이신가요?
                 <button 
                   type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
+                  onClick={() => {
+                    setShowLoginModal(false);
+                    setShowSignupModal(true);
+                    setIsSignUp(false);
+                    setEmail('');
+                    setPassword('');
+                  }}
                 >
-                  {isSignUp ? '로그인' : '회원가입'}
+                  회원가입
                 </button>
               </p>
               
@@ -1713,24 +2634,61 @@ const VolatilityPrediction: React.FC = () => {
         </div>
       )}
 
-      {showWalletModal && (
-        <WalletLogin
-          onSuccess={(userData) => {
-            setUser(userData);
-            setUserPoints(userData.points);
-            setStreak(userData.streak);
-            setTotalWins(userData.total_wins || 0);
-            setTotalDraws(userData.total_draws || 0);
-            setTotalLosses(userData.total_losses || 0);
-            setAvatarUrl(userData.avatar_url || '');
-            const total = (userData.total_wins || 0) + (userData.total_losses || 0);
-            setWinRate(total > 0 ? Math.round((userData.total_wins / total) * 100) : 0);
-            setConsecutiveDays(userData.consecutive_days || 0);
-            setLastAttendance(userData.last_attendance ? new Date(userData.last_attendance) : null);
-            setShowWalletModal(false);
-          }}
-          onClose={() => setShowWalletModal(false)}
-        />
+      {showSignupModal && (
+        <div className="modal-overlay" onClick={() => setShowSignupModal(false)}>
+          <div className="auth-modal" onClick={e => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setShowSignupModal(false)}>×</button>
+            
+            <div className="modal-header">
+              <h2>회원가입</h2>
+              <p>비트코인 변동성 예측 게임</p>
+            </div>
+            
+            <form onSubmit={handleSignUp} className="auth-form">
+              <div className="form-group">
+                <input
+                  type="email"
+                  placeholder="이메일"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <input
+                  type="password"
+                  placeholder="비밀번호 (6자 이상)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                />
+              </div>
+              
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? '처리중...' : '회원가입'}
+              </button>
+              
+              <p className="toggle-mode">
+                이미 계정이 있으신가요?
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setShowSignupModal(false);
+                    setShowLoginModal(true);
+                    setEmail('');
+                    setPassword('');
+                  }}
+                >
+                  로그인
+                </button>
+              </p>
+              
+              {message && <div className="alert">{message}</div>}
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

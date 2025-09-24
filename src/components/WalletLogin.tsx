@@ -1,266 +1,175 @@
-// components/WalletLogin.tsx
-import React, { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
+import React, { useState } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import './WalletLogin.css';
 
-import metamaskLogo from '../assets/metamask.png';  // wallets 폴더 제거
-import phantomLogo from '../assets/phantom.png';     // wallets 폴더 제거  
+interface WalletLoginProps {
+  onSuccess: (userData: any) => void;
+  onClose: () => void;
+}
 
 declare global {
   interface Window {
     ethereum?: any;
-    solana?: any;
   }
-}
-
-interface WalletLoginProps {
-  onSuccess: (user: any) => void;
-  onClose: () => void;
 }
 
 const WalletLogin: React.FC<WalletLoginProps> = ({ onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [selectedWallet, setSelectedWallet] = useState('');
+  const [error, setError] = useState<string>('');
 
-  useEffect(() => {
-    // 저장된 월렛 주소로 자동 로그인
-    const savedAddress = localStorage.getItem('walletAddress');
-    const savedType = localStorage.getItem('walletType');
-    
-    if (savedAddress && savedType) {
-      autoLogin(savedAddress, savedType);
-    }
-  }, []);
-
-  const autoLogin = async (address: string, type: string) => {
-    try {
-      const { data } = await supabase
-        .from('users')
-        .select('*')
-        .eq('wallet_address', address.toLowerCase())
-        .single();
-
-      if (data) {
-        onSuccess(data);
-        onClose();
-      }
-    } catch (err) {
-      console.error('Auto login failed:', err);
-      localStorage.removeItem('walletAddress');
-      localStorage.removeItem('walletType');
-    }
-  };
-
-  // MetaMask 연결
-  const connectMetaMask = async () => {
-    if (!window.ethereum) {
-      setError('MetaMask가 설치되지 않았습니다');
-      window.open('https://metamask.io/download/', '_blank');
-      return;
-    }
-
+  const connectWallet = async () => {
     setLoading(true);
     setError('');
-    setSelectedWallet('metamask');
 
     try {
+      // MetaMask 설치 확인
+      if (!window.ethereum) {
+        setError('MetaMask가 설치되어 있지 않습니다.');
+        window.open('https://metamask.io/download/', '_blank');
+        setLoading(false);
+        return;
+      }
+
+      // 계정 연결 요청
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
       
-      const address = accounts[0].toLowerCase();
-      
-      // 서명 생성
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const message = `BTC Prediction Game 로그인\n\n지갑 주소: ${address}\n시간: ${new Date().toISOString()}`;
-      const signature = await signer.signMessage(message);
+      if (!accounts || accounts.length === 0) {
+        setError('계정을 찾을 수 없습니다.');
+        setLoading(false);
+        return;
+      }
 
-      // DB 저장
-      const { data: userData, error: dbError } = await supabase
-        .from('users')
-        .upsert({
-          wallet_address: address,
-          wallet_type: 'metamask',
-          username: `User_${address.slice(0, 6)}`,
-          points: 1000,
-          streak: 0,
-          consecutive_days: 0,
-          last_login: new Date().toISOString()
-        }, {
-          onConflict: 'wallet_address'
-        })
-        .select()
-        .single();
+      const address = accounts[0];
+      console.log('Connected wallet:', address);
 
-      if (dbError) throw dbError;
+      // Sepolia 네트워크 전환
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0xaa36a7' }],
+        });
+      } catch (switchError: any) {
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: '0xaa36a7',
+                chainName: 'Sepolia test network',
+                nativeCurrency: {
+                  name: 'SepoliaETH',
+                  symbol: 'ETH',
+                  decimals: 18
+                },
+                rpcUrls: ['https://sepolia.infura.io/v3/'],
+                blockExplorerUrls: ['https://sepolia.etherscan.io']
+              }]
+            });
+          } catch (addError) {
+            console.error('네트워크 추가 실패:', addError);
+            setError('Sepolia 네트워크 추가 실패');
+            setLoading(false);
+            return;
+          }
+        } else {
+          console.error('네트워크 전환 실패:', switchError);
+          setError('네트워크 전환 실패');
+          setLoading(false);
+          return;
+        }
+      }
 
-      localStorage.setItem('walletAddress', address);
-      localStorage.setItem('walletType', 'metamask');
+      // 현재 로그인된 사용자 확인
+      const { data: { session } } = await supabase.auth.getSession();
       
-      onSuccess(userData);
-      onClose();
-      
-    } catch (err: any) {
-      setError(err.message || 'MetaMask 연결 실패');
-    } finally {
-      setLoading(false);
-      setSelectedWallet('');
-    }
-  };
-
-  const connectPhantom = async () => {
-    const { solana } = window;
-    
-    if (!solana || !solana.isPhantom) {
-      setError('Phantom 월렛이 설치되지 않았습니다');
-      window.open('https://phantom.app/', '_blank');
-      return;
-    }
-  
-    setLoading(true);
-    setError('');
-    setSelectedWallet('phantom');
-  
-    try {
-      // 연결 시 onlyIfTrusted 옵션 제거
-      const response = await solana.connect();
-      const publicKey = response.publicKey.toString();
-      
-      // DB 저장 시 에러 처리 개선
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('*')
-        .eq('wallet_address', publicKey.toLowerCase())
-        .single();
-  
-      let userData;
-      
-      if (existingUser) {
-        // 기존 유저면 업데이트
-        const { data, error } = await supabase
+      if (session?.user?.email) {
+        const { data, error: updateError } = await supabase
           .from('users')
-          .update({
-            last_login: new Date().toISOString()
-          })
-          .eq('wallet_address', publicKey.toLowerCase())
+          .update({ wallet_address: address })
+          .eq('email', session.user.email)
           .select()
           .single();
-          
-        userData = data;
+
+        if (updateError) {
+          console.error('사용자 정보 업데이트 실패:', updateError);
+          setError('사용자 정보 업데이트 실패');
+        } else if (data) {
+          console.log('사용자 정보 업데이트 성공:', data);
+          onSuccess(data);
+          alert('지갑이 연결되었습니다!');
+        }
       } else {
-        // 새 유저면 생성
-        const { data, error } = await supabase
-          .from('users')
-          .insert({
-            wallet_address: publicKey.toLowerCase(),
-            wallet_type: 'phantom',
-            username: `User_${publicKey.slice(0, 6)}`,
-            points: 1000,
-            streak: 0,
-            consecutive_days: 0,
-            last_login: new Date().toISOString()
-          })
-          .select()
-          .single();
-          
-        userData = data;
+        // 세션이 없는 경우 localStorage 사용
+        const userEmail = localStorage.getItem('userEmail');
+        if (userEmail) {
+          const { data, error: updateError } = await supabase
+            .from('users')
+            .update({ wallet_address: address })
+            .eq('email', userEmail)
+            .select()
+            .single();
+
+          if (updateError) {
+            console.error('사용자 정보 업데이트 실패:', updateError);
+            setError('사용자 정보 업데이트 실패');
+          } else if (data) {
+            console.log('사용자 정보 업데이트 성공:', data);
+            onSuccess(data);
+            alert('지갑이 연결되었습니다!');
+          }
+        } else {
+          setError('로그인이 필요합니다.');
+        }
       }
-  
-      if (userData) {
-        localStorage.setItem('walletAddress', publicKey);
-        localStorage.setItem('walletType', 'phantom');
-        onSuccess(userData);
-        onClose();
-      }
-      
-    } catch (err: any) {
-      console.error('Phantom error:', err);
-      setError('Phantom 연결 실패: ' + err.message);
+
+    } catch (error: any) {
+      console.error('Wallet connection error:', error);
+      setError(error.message || '알 수 없는 오류가 발생했습니다.');
     } finally {
       setLoading(false);
-      setSelectedWallet('');
     }
   };
-
-
-  const wallets = [
-    {
-      id: 'metamask',
-      name: 'MetaMask',
-      logo: metamaskLogo,  // icon 대신 logo로 변경
-      description: 'Ethereum, BSC, Polygon',
-      connect: connectMetaMask,
-      color: '#f6851b'
-    },
-    {
-      id: 'phantom',
-      name: 'Phantom',
-      logo: phantomLogo,  // icon 대신 logo로 변경
-      description: 'Solana',
-      connect: connectPhantom,
-      color: '#ab9ff2'
-    }
-  ];
 
   return (
     <div className="wallet-modal-overlay" onClick={onClose}>
-      <div className="wallet-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="close-modal" onClick={onClose}>×</button>
+      <div className="wallet-modal-content" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>×</button>
         
-        <div className="wallet-header">
-          <h2>지갑 연결</h2>
-          <p>Web3 지갑으로 간편 로그인</p>
-        </div>
-  
+        <h2>MetaMask 지갑 연결</h2>
+        <p className="network-info">Ethereum Sepolia 테스트넷</p>
+        
         {error && (
-          <div className="wallet-error">
+          <div className="error-message">
             ⚠️ {error}
           </div>
         )}
-  
-        <div className="wallet-grid">
-          {wallets.map(wallet => (
-            <button
-              key={wallet.id}
-              className={`wallet-card ${selectedWallet === wallet.id ? 'active' : ''}`}
-              onClick={wallet.connect}
-              disabled={loading}
-              style={{
-                '--wallet-color': wallet.color
-              } as React.CSSProperties}
-            >
-              <img 
-                src={wallet.logo} 
-                alt={wallet.name}
-                className="wallet-logo"
-              />
-              <div className="wallet-info">
-                <div className="wallet-name">{wallet.name}</div>
-                <div className="wallet-description">{wallet.description}</div>
-              </div>
-              {loading && selectedWallet === wallet.id && (
-                <div className="wallet-loading">
-                  <div className="spinner"></div>
-                </div>
-              )}
-            </button>
-          ))}
+
+        <div className="wallet-icon">
+          🦊
         </div>
-  
-        <div className="wallet-footer">
-          <p>지갑이 없으신가요?</p>
-          <div className="wallet-links">
-            <a href="https://metamask.io" target="_blank" rel="noopener noreferrer">MetaMask 설치</a>
-            <span>•</span>
-            <a href="https://phantom.app" target="_blank" rel="noopener noreferrer">Phantom 설치</a>
-          </div>
+
+        <button 
+          className="connect-wallet-btn"
+          onClick={connectWallet}
+          disabled={loading}
+        >
+          {loading ? '연결 중...' : '🦊 MetaMask 연결하기'}
+        </button>
+
+        <div className="wallet-instructions">
+          <h4>연결 순서</h4>
+          <ol>
+            <li>MetaMask 연결 버튼 클릭</li>
+            <li>MetaMask 팝업에서 계정 선택</li>
+            <li>연결 승인</li>
+            <li>Sepolia 네트워크로 자동 전환</li>
+          </ol>
         </div>
       </div>
     </div>
   );
-}; 
+};
 
 export default WalletLogin;
